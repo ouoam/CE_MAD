@@ -33,6 +33,14 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define LED_ARR_ON	GPIO_PIN_RESET
+#define LED_ARR_OFF GPIO_PIN_SET
+#define EXT_BTN_ON	GPIO_PIN_RESET
+
+/* --------------------- Change question to compile here ---------------------*/ 
+/* ---------------------- Available question 1, 2 and 4 ----------------------*/ 
+#define QUESTION 4
+ 
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,7 +51,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+int8_t stage = 8;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -86,7 +94,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-
+#if QUESTION == 4
+	GPIO_TypeDef* LED_Port[8] = {D0_GPIO_Port, D1_GPIO_Port, D2_GPIO_Port, D3_GPIO_Port, D4_GPIO_Port, D5_GPIO_Port, D6_GPIO_Port, D7_GPIO_Port};
+	uint32_t LED_Pin[8] = {D0_Pin, D1_Pin, D2_Pin, D3_Pin, D4_Pin, D5_Pin, D6_Pin, D7_Pin};
+#endif
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -96,6 +107,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+#if QUESTION == 1
 		// Check whether button is pressed
 		if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_SET)
 		{
@@ -108,6 +120,43 @@ int main(void)
 			//Turn off LD1 at PB0
 			HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_RESET);
 		}
+#elif QUESTION == 2
+		if (HAL_GPIO_ReadPin(EXT_BTN_GPIO_Port, EXT_BTN_Pin) == EXT_BTN_ON)
+		{
+			HAL_GPIO_WritePin(EXT_LED_GPIO_Port, EXT_LED_Pin, GPIO_PIN_SET);
+			stage = 1;
+			HAL_Delay(1000);
+			HAL_GPIO_WritePin(EXT_LED_GPIO_Port, EXT_LED_Pin, GPIO_PIN_RESET);
+			stage = 0;
+		}
+#elif QUESTION == 4
+		if (HAL_GPIO_ReadPin(EXT_BTN_GPIO_Port, EXT_BTN_Pin) == EXT_BTN_ON)
+		{
+			if (stage < 7) stage++;
+			else stage = 0;
+			
+//			for (int i = 0; i < 8; i++) {
+//				HAL_GPIO_WritePin(LED_Port[i], LED_Pin[i], i == stage ? LED_ARR_ON : LED_ARR_OFF);
+//			}
+			
+			HAL_GPIO_WritePin(LED_Port[stage], LED_Pin[stage], LED_ARR_ON);
+			HAL_GPIO_WritePin(LED_Port[(stage+7) %8], LED_Pin[(stage+7) %8], LED_ARR_OFF);
+			
+			while(HAL_GPIO_ReadPin(EXT_BTN_GPIO_Port, EXT_BTN_Pin) == EXT_BTN_ON);
+			HAL_Delay(100);
+		}
+		
+		if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_SET)
+		{
+			// HAL_GPIO_WritePin(LED_Port[stage], LED_Pin[stage], LED_ARR_OFF);
+			for (int i = 7; i >= 0; i--) {
+				HAL_GPIO_WritePin(LED_Port[i], LED_Pin[i], LED_ARR_ON);
+				HAL_Delay(500);
+				HAL_GPIO_WritePin(LED_Port[i], LED_Pin[i], LED_ARR_OFF);
+			}
+			stage = 8; // All off
+		}
+#endif
   }
   /* USER CODE END 3 */
 }

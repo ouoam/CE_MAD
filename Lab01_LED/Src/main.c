@@ -33,6 +33,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+/* --------------------- Change question to compile here ---------------------*/
+/* ---------------------- Available question 1, 2 and 3 ----------------------*/
+#define QUESTION 3
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -97,14 +102,29 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		
-		if (num <= 7)
+		if (num < 7)
 			num++;
 		else
 			num = 0;
 		
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+#if QUESTION == 1 || QUESTION == 2
+		// HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
+		LD1_GPIO_Port->ODR ^= LD1_Pin;
+		
 		delay(500);
-		// HAL_Delay(500);
+#elif QUESTION == 3
+		GPIOB->ODR ^= GPIOB->ODR ^ (((num>>0&1)<<0) | ((num>>1&1)<<7) | ((num>>2&1)<<14));
+		
+		// LD1_GPIO_Port->ODR ^= LD1_Pin;
+		// LD2_GPIO_Port->ODR ^= !(num >> 1 & 1) == !(LD2_GPIO_Port->ODR & LD2_Pin) ? 0 : LD2_Pin;
+		// LD3_GPIO_Port->ODR ^= !(num >> 2 & 1) == !(LD3_GPIO_Port->ODR & LD3_Pin) ? 0 : LD3_Pin;
+		
+		// HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, num >> 0 & 1 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+		// HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, num >> 1 & 1 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+		// HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, num >> 2 & 1 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+		
+		delay(300);
+#endif
   }
   /* USER CODE END 3 */
 }
@@ -163,9 +183,13 @@ void SystemClock_Config(void)
 void delay(uint32_t ms)
 {
 	volatile uint32_t i, j;
-	
+#if QUESTION == 1 || QUESTION == 3
+	#define ROUND 7500
+#elif QUESTION == 2
+	#define ROUND 36251
+#endif
 	for (i = 0; i < ms; i++)
-		for (j = 0; j < 27016; j++)
+		for (j = 0; j < ROUND; j++)
 			;
 	return ;
 }
