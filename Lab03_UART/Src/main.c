@@ -19,11 +19,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,14 +34,11 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LED_ARR_ON	GPIO_PIN_RESET
-#define LED_ARR_OFF GPIO_PIN_SET
-#define EXT_BTN_ON	GPIO_PIN_RESET
 
-/* --------------------- Change question to compile here ---------------------*/ 
-/* ---------------------- Available question 1, 2 and 4 ----------------------*/ 
+/* --------------------- Change question to compile here ---------------------*/  
+/* ---------------------- Available question 1, 2, 3 and 4 ----------------------*/  
 #define QUESTION 4
- 
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -51,7 +49,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-int8_t stage = 8;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,10 +91,15 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 #if QUESTION == 4
-	GPIO_TypeDef* LED_Port[8] = {D0_GPIO_Port, D1_GPIO_Port, D2_GPIO_Port, D3_GPIO_Port, D4_GPIO_Port, D5_GPIO_Port, D6_GPIO_Port, D7_GPIO_Port};
-	uint32_t LED_Pin[8] = {D0_Pin, D1_Pin, D2_Pin, D3_Pin, D4_Pin, D5_Pin, D6_Pin, D7_Pin};
+	char welcome[] = "\r\n\
+Display Blinking LED PRESS (r, g)\r\n\
+Display Group Members PRESS m\r\n\
+Quit PRESS q";
+
+	HAL_UART_Transmit(&huart3, (uint8_t*) welcome, strlen(welcome), 1000);
 #endif
   /* USER CODE END 2 */
 
@@ -107,55 +110,65 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-#if QUESTION == 1
-		// Check whether button is pressed
-		if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_SET)
-		{
-			// Turn on LD1 at PB0
-			HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_SET);
-			
-			// Delay 1,000 milliseconds
-			HAL_Delay(1000);
-			
-			//Turn off LD1 at PB0
-			HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_RESET);
-		}
-#elif QUESTION == 2
-		if (HAL_GPIO_ReadPin(EXT_BTN_GPIO_Port, EXT_BTN_Pin) == EXT_BTN_ON)
-		{
-			HAL_GPIO_WritePin(EXT_LED_GPIO_Port, EXT_LED_Pin, GPIO_PIN_SET);
-			stage = 1;
-			HAL_Delay(1000);
-			HAL_GPIO_WritePin(EXT_LED_GPIO_Port, EXT_LED_Pin, GPIO_PIN_RESET);
-			stage = 0;
-		}
-#elif QUESTION == 4
-		if (HAL_GPIO_ReadPin(EXT_BTN_GPIO_Port, EXT_BTN_Pin) == EXT_BTN_ON)
-		{
-			if (stage < 7) stage++;
-			else stage = 0;
-			
-//			for (int i = 0; i < 8; i++) {
-//				HAL_GPIO_WritePin(LED_Port[i], LED_Pin[i], i == stage ? LED_ARR_ON : LED_ARR_OFF);
-//			}
-			
-			HAL_GPIO_WritePin(LED_Port[stage], LED_Pin[stage], LED_ARR_ON);
-			HAL_GPIO_WritePin(LED_Port[(stage+7) %8], LED_Pin[(stage+7) %8], LED_ARR_OFF);
-			
-			while(HAL_GPIO_ReadPin(EXT_BTN_GPIO_Port, EXT_BTN_Pin) == EXT_BTN_ON);
-			HAL_Delay(100);
-		}
+#if QUESTION == 1 || QUESTION == 3 || QUESTION == 4
+	#if QUESTION == 1
+		char str[] = "Hello, World!!\n\r";
+	#elif QUESTION == 3
+		char str[] = "\n\rInput => ";
+	#elif QUESTION == 4
+		char str[] = "\n\r\tInput => ";
+	#endif
+		// print string before rx and/or tx char
+		while (__HAL_UART_GET_FLAG(&huart3, UART_FLAG_TC) == RESET);
+		HAL_UART_Transmit(&huart3, (uint8_t*) str, strlen(str), 1000);
+#endif
 		
-		if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_SET)
-		{
-			HAL_GPIO_WritePin(LED_Port[stage], LED_Pin[stage], LED_ARR_OFF);
-			for (int i = 7; i >= 0; i--) {
-				HAL_GPIO_WritePin(LED_Port[i], LED_Pin[i], LED_ARR_ON);
-				HAL_Delay(500);
-				HAL_GPIO_WritePin(LED_Port[i], LED_Pin[i], LED_ARR_OFF);
-			}
-			stage = 8; // All off
+#if QUESTION == 2 || QUESTION == 3 || QUESTION == 4
+		char ch1 = 'A';
+	
+	#if QUESTION == 3 || QUESTION == 4
+		// rx char
+		while (__HAL_UART_GET_FLAG(&huart3, UART_FLAG_RXNE)== RESET); // wait for RX
+		HAL_UART_Receive(&huart3, (uint8_t*) &ch1, 1, 1000);
+	#endif
+
+		// print char
+		HAL_UART_Transmit(&huart3, (uint8_t*) &ch1, sizeof(ch1), 1000);
+#endif
+
+#if QUESTION == 1 || QUESTION == 2
+		HAL_Delay(500);
+#endif
+			
+#if QUESTION == 3 || QUESTION == 4
+		if (ch1 == 'q') {
+			char str[] = "\n\rQUIT";
+			HAL_UART_Transmit(&huart3, (uint8_t*) str, strlen(str), 1000);
+			break;
 		}
+	#if QUESTION == 4
+		else if (ch1 == 'r') {
+			for (int i = 0; i < 3; i++) {
+				HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_RESET);
+				HAL_Delay(300);
+				HAL_GPIO_WritePin(LED_R_GPIO_Port, LED_R_Pin, GPIO_PIN_SET);
+				HAL_Delay(300);
+			}
+		} else if (ch1 == 'g') {
+			for (int i = 0; i < 3; i++) {
+				HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_RESET);
+				HAL_Delay(300);
+				HAL_GPIO_WritePin(LED_G_GPIO_Port, LED_G_Pin, GPIO_PIN_SET);
+				HAL_Delay(300);
+			}
+		} else if (ch1 == 'm') {
+			char str[] = "\n\r61010827\n\rPhumphathai Chansriwong";
+			HAL_UART_Transmit(&huart3, (uint8_t*) str, strlen(str), 1000);
+		} else {
+			char str[] = "\n\rUnknown Command";
+			HAL_UART_Transmit(&huart3, (uint8_t*) str, strlen(str), 1000);
+		}
+	#endif
 #endif
   }
   /* USER CODE END 3 */
@@ -169,6 +182,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
   */
@@ -206,6 +220,12 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3;
+  PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
