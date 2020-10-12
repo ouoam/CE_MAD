@@ -110,10 +110,10 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_DCMI_Init();
-  MX_ETH_Init();
+  // MX_ETH_Init();
   MX_I2C2_Init();
-  MX_JPEG_Init();
-  MX_SDMMC2_SD_Init();
+  // MX_JPEG_Init();
+  // MX_SDMMC2_SD_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 	//ov7670_init(&hdcmi, &hi2c2);
