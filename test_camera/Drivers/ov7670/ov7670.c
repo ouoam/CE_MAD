@@ -33,12 +33,10 @@ HAL_StatusTypeDef ov7670_init(DCMI_HandleTypeDef *p_hdcmi, I2C_HandleTypeDef *p_
   sp_hi2c      = p_hi2c;
   s_destAddressForContiuousMode = 0;
 
-  /*
-  HAL_GPIO_WritePin(CAMERA_RESET_GPIO_Port, CAMERA_RESET_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(CAM_RESET_GPIO_Port, CAM_RESET_Pin, GPIO_PIN_RESET);
   HAL_Delay(100);
-  HAL_GPIO_WritePin(CAMERA_RESET_GPIO_Port, CAMERA_RESET_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(CAM_RESET_GPIO_Port, CAM_RESET_Pin, GPIO_PIN_SET);
   HAL_Delay(100);
-  */
 
   ov7670_write(0x12, 0x80);  // RESET
 	
@@ -50,9 +48,19 @@ HAL_StatusTypeDef ov7670_init(DCMI_HandleTypeDef *p_hdcmi, I2C_HandleTypeDef *p_
 
 	for(int i = 0; ov7670_default_regs[i].reg_num != REG_BATT; i++) {
     ov7670_write(ov7670_default_regs[i].reg_num, ov7670_default_regs[i].value);
-    // HAL_Delay(1);
+    HAL_Delay(1);
   }
-
+	/*
+	for(int i = 0; yuv422_ov7670[i].reg_num != REG_BATT; i++) {
+    ov7670_write(yuv422_ov7670[i].reg_num, yuv422_ov7670[i].value);
+    HAL_Delay(1);
+  }
+	
+	for(int i = 0; vga_ov7670[i].reg_num != REG_BATT; i++) {
+    ov7670_write(vga_ov7670[i].reg_num, vga_ov7670[i].value);
+    HAL_Delay(1);
+  }
+*/
   return HAL_OK;
 }
 

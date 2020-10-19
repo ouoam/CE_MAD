@@ -21,10 +21,8 @@
 #include "main.h"
 #include "dcmi.h"
 #include "dma.h"
-#include "eth.h"
 #include "i2c.h"
-#include "jpeg.h"
-#include "sdmmc.h"
+#include "i2s.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -79,6 +77,33 @@ int ferror(FILE *f){
 }
 /* PRINTF REDIRECT to UART END */
 
+uint32_t buffCAM[RES_VGA_W * 16];
+
+int aa = 0;
+int bb = 0;
+
+
+void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
+{
+  //printf("FRAME %d\n", HAL_GetTick());
+	printf("%d %d\n", aa, bb);
+	aa = 0;
+	bb = 0;
+}
+
+void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
+{
+  //printf("VSYNC %d\n", HAL_GetTick());
+	bb++;
+}
+
+void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
+{
+  //printf("HSYNC %d\n", HAL_GetTick());
+	aa++;
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -110,13 +135,17 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_DCMI_Init();
-  // MX_ETH_Init();
   MX_I2C2_Init();
-  // MX_JPEG_Init();
-  // MX_SDMMC2_SD_Init();
   MX_USART3_UART_Init();
+  MX_I2S3_Init();
   /* USER CODE BEGIN 2 */
-	//ov7670_init(&hdcmi, &hi2c2);
+	ov7670_init(&hdcmi, &hi2c2);
+	
+	
+	HAL_Delay(500);
+	
+	HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)buffCAM, RES_VGA_W * 16);
+	
 	
   /* USER CODE END 2 */
 
@@ -125,8 +154,8 @@ int main(void)
   while (1)
   {
 		// printf("1234567890\r\n");
-		HAL_UART_Transmit(&huart3, "1234567890\r\n", 12, 500);
-		HAL_Delay(1);
+		// HAL_UART_Transmit(&huart3, (unsigned char *)"1234567890\r\n", 12, 500);
+		// HAL_Delay(1);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -154,12 +183,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 216;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 9;
@@ -187,17 +215,15 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_PLLI2S|RCC_PERIPHCLK_USART3
-                              |RCC_PERIPHCLK_I2C2|RCC_PERIPHCLK_SDMMC2
-                              |RCC_PERIPHCLK_CLK48;
+                              |RCC_PERIPHCLK_I2C2|RCC_PERIPHCLK_I2S;
   PeriphClkInitStruct.PLLI2S.PLLI2SN = 144;
   PeriphClkInitStruct.PLLI2S.PLLI2SP = RCC_PLLP_DIV2;
   PeriphClkInitStruct.PLLI2S.PLLI2SR = 3;
   PeriphClkInitStruct.PLLI2S.PLLI2SQ = 2;
   PeriphClkInitStruct.PLLI2SDivQ = 1;
+  PeriphClkInitStruct.I2sClockSelection = RCC_I2SCLKSOURCE_PLLI2S;
   PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
   PeriphClkInitStruct.I2c2ClockSelection = RCC_I2C2CLKSOURCE_PCLK1;
-  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
-  PeriphClkInitStruct.Sdmmc2ClockSelection = RCC_SDMMC2CLKSOURCE_CLK48;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();

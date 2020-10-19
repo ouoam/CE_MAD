@@ -18,7 +18,7 @@
           <Vendor>STMicroelectronics</Vendor>
           <PackID>Keil.STM32F7xx_DFP.2.13.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
-          <Cpu>IRAM(0x20000000-0x2007FFFF) IROM(0x8000000-0x81FFFFF)      CLOCK(12000000) FPU3(DFPU) CPUTYPE("Cortex-M7") ELITTLE</Cpu>
+          <Cpu>IRAM(0x20000000-0x2007FFFF) IROM(0x8000000-0x81FFFFF)         CLOCK(12000000) FPU3(DFPU) CPUTYPE("Cortex-M7") ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
           <FlashDriverDll></FlashDriverDll>
@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F767xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;         ../Drivers/STM32F7xx_HAL_Driver/Inc;         ../Drivers/STM32F7xx_HAL_Driver/Inc/Legacy;         ../Utilities/JPEG;         ../Drivers/CMSIS/Device/ST/STM32F7xx/Include;         ../Drivers/CMSIS/Include;         ../Drivers/ov7670</IncludePath>
+              <IncludePath>../Core/Inc;            ../Drivers/STM32F7xx_HAL_Driver/Inc;            ../Drivers/STM32F7xx_HAL_Driver/Inc/Legacy;            ../Drivers/CMSIS/Device/ST/STM32F7xx/Include;            ../Drivers/CMSIS/Include;            ../Drivers/ov7670</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -414,24 +414,14 @@
               <FilePath>../Core/Src/dma.c</FilePath>
             </File>
             <File>
-              <FileName>eth.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Core/Src/eth.c</FilePath>
-            </File>
-            <File>
               <FileName>i2c.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/i2c.c</FilePath>
             </File>
             <File>
-              <FileName>jpeg.c</FileName>
+              <FileName>i2s.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Core/Src/jpeg.c</FilePath>
-            </File>
-            <File>
-              <FileName>sdmmc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Core/Src/sdmmc.c</FilePath>
+              <FilePath>../Core/Src/i2s.c</FilePath>
             </File>
             <File>
               <FileName>usart.c</FileName>
@@ -613,24 +603,9 @@
               <FilePath>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_exti.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f7xx_hal_eth.c</FileName>
+              <FileName>stm32f7xx_hal_i2s.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_eth.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f7xx_hal_jpeg.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_jpeg.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f7xx_ll_sdmmc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_sdmmc.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f7xx_hal_sd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sd.c</FilePath>
+              <FilePath>../Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2s.c</FilePath>
             </File>
             <File>
               <FileName>stm32f7xx_hal_tim.c</FileName>
@@ -661,16 +636,6 @@
               <FileName>system_stm32f7xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/system_stm32f7xx.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Utilities</GroupName>
-          <Files>
-            <File>
-              <FileName>jpeg_utils.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Utilities/JPEG/jpeg_utils.c</FilePath>
             </File>
           </Files>
         </Group>

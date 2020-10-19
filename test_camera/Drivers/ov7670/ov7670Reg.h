@@ -207,7 +207,7 @@ static const struct regval_list qqvga_ov7670[] = {
 	{ REG_VSTART,	0x02 },
 	{ REG_VSTOP,	0x7a },
 	{ REG_VREF,		0x0a },
-
+	
 	{ REG_BATT,		REG_BATT },	/* END MARKER */
 };
 
