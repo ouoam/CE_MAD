@@ -84,15 +84,16 @@ int bb = 0;
 
 uint32_t last;
 
-
 void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
 	uint32_t now = HAL_GetTick();
   //printf("FRAME %d\n", HAL_GetTick());
-	printf("%d %d %f\r\n", aa, bb, 1000.0 / (now  - last));
+	//printf("%d %d %f\r\n", aa, bb, 1000.0 / (now  - last));
+	printf("*RDY*");
 	aa = 0;
 	bb = 0;
 	last = now;
+	HAL_UART_Transmit(&huart3, (uint8_t *)buffCAM, RES_QQVGA_W * RES_QQVGA_H * 2, 1000);
 }
 
 void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
@@ -163,13 +164,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	uint32_t me = last;
   while (1)
   {
-		if (me != last) {
-			HAL_UART_Transmit(&huart3, (uint8_t *)buffCAM, RES_QQVGA_W * RES_QQVGA_H * 2, 1000);
-			me = last;
-		}
 		// printf("1234567890\r\n");
 		// HAL_UART_Transmit(&huart3, (unsigned char *)"1234567890\r\n", 12, 500);
 		// HAL_Delay(1);
