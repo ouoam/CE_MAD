@@ -1,367 +1,354 @@
-#ifndef OV7670_OV7670REG_H_
-#define OV7670_OV7670REG_H_
-
-/* Registers */
-
-#define REG_GAIN		0x00  /* Gain lower 8 bits (rest in vref) */
-#define REG_BLUE		0x01  /* blue gain */
-#define REG_RED			0x02  /* red gain */
-#define REG_VREF		0x03  /* Pieces of GAIN, VSTART, VSTOP */
-#define REG_COM1		0x04  /* Control 1 */
-	#define COM1_CCIR656	0x40  /* CCIR656 enable */
-#define REG_BAVE		0x05  /* U/B Average level */
-#define REG_GbAVE		0x06  /* Y/Gb Average level */
-#define REG_AECHH		0x07  /* AEC MS 5 bits */
-#define REG_RAVE		0x08  /* V/R Average level */
-#define REG_COM2		0x09  /* Control 2 */
-	#define COM2_SSLEEP		0x10  /* Soft sleep mode */
-#define REG_PID			0x0a  /* Product ID MSB */
-#define REG_VER			0x0b  /* Product ID LSB */
-#define REG_COM3		0x0c  /* Control 3 */
-	#define COM3_SWAP		0x40  /* Byte swap */
-	#define COM3_SCALEEN	0x08  /* Enable scaling */
-	#define COM3_DCWEN		0x04  /* Enable downsamp/crop/window */
-#define REG_COM4		0x0d  /* Control 4 */
-#define REG_COM5		0x0e  /* All "reserved" */
-#define REG_COM6		0x0f  /* Control 6 */
-#define REG_AECH		0x10  /* More bits of AEC value */
-#define REG_CLKRC		0x11  /* Clocl control */
-	#define CLK_EXT			0x40  /* Use external clock directly */
-	#define CLK_SCALE		0x3f  /* Mask for internal clock scale */
-#define REG_COM7		0x12  /* Control 7 */ //REG mean address.
-	#define COM7_RESET		0x80  /* Register reset */
-	#define COM7_FMT_MASK	0x38
-	#define COM7_FMT_VGA	0x00
-	#define COM7_FMT_CIF	0x20  /* CIF format */
-	#define COM7_FMT_QVGA	0x10  /* QVGA format */
-	#define COM7_FMT_QCIF	0x08  /* QCIF format */
-	#define COM7_RGB		0x04  /* bits 0 and 2 - RGB format */
-	#define COM7_YUV		0x00  /* YUV */
-	#define COM7_BAYER		0x01  /* Bayer format */
-	#define COM7_PBAYER		0x05  /* "Processed bayer" */
-#define REG_COM8		0x13  /* Control 8 */
-	#define COM8_FASTAEC	0x80  /* Enable fast AGC/AEC */
-	#define COM8_AECSTEP	0x40  /* Unlimited AEC step size */
-	#define COM8_BFILT		0x20  /* Band filter enable */
-	#define COM8_AGC		0x04  /* Auto gain enable */
-	#define COM8_AWB		0x02  /* White balance enable */
-	#define COM8_AEC		0x01  /* Auto exposure enable */
-#define REG_COM9		0x14  /* Control 9- gain ceiling */
-#define REG_COM10		0x15  /* Control 10 */
-	#define COM10_HSYNC		0x40  /* HSYNC instead of HREF */
-	#define COM10_PCLK_HB	0x20  /* Suppress PCLK on horiz blank */
-	#define COM10_HREF_REV	0x08  /* Reverse HREF */
-	#define COM10_VS_LEAD	0x04  /* VSYNC on clock leading edge */
-	#define COM10_VS_NEG	0x02  /* VSYNC negative */
-	#define COM10_HS_NEG	0x01  /* HSYNC negative */
-#define REG_HSTART		0x17  /* Horiz start high bits */
-#define REG_HSTOP		0x18  /* Horiz stop high bits */
-#define REG_VSTART		0x19  /* Vert start high bits */
-#define REG_VSTOP		0x1a  /* Vert stop high bits */
-#define REG_PSHFT		0x1b  /* Pixel delay after HREF */
-#define REG_MIDH		0x1c  /* Manuf. ID high */
-#define REG_MIDL		0x1d  /* Manuf. ID low */
-#define REG_MVFP		0x1e  /* Mirror / vflip */
-	#define MVFP_MIRROR		0x20  /* Mirror image */
-	#define MVFP_FLIP		0x10  /* Vertical flip */
-// 0x20
-#define REG_AEW			0x24  /* AGC upper limit */
-#define REG_AEB			0x25  /* AGC lower limit */
-#define REG_VPT			0x26  /* AGC/AEC fast mode op region */
-// 0x27 - 0x2F
-#define REG_HSYST		0x30  /* HSYNC rising edge delay */
-#define REG_HSYEN		0x31  /* HSYNC falling edge delay */
-#define REG_HREF		0x32  /* HREF pieces */
-// 0x33 - 0x39
-#define REG_TSLB		0x3a  /* lots of stuff */
-	#define TSLB_YLAST		0x04  /* UYVY or VYUY - see com13 */
-#define REG_COM11		0x3b  /* Control 11 */
-	#define COM11_NIGHT		0x80  /* NIght mode enable */
-	#define COM11_NMFR		0x60  /* Two bit NM frame rate */
-	#define COM11_HZAUTO	0x10  /* Auto detect 50/60 Hz */
-	#define COM11_50HZ		0x08  /* Manual 50Hz select */
-	#define COM11_EXP		0x02
-#define REG_COM12		0x3c  /* Control 12 */
-	#define COM12_HREF		0x80  /* HREF always */
-#define REG_COM13		0x3d  /* Control 13 */
-	#define COM13_GAMMA		0x80  /* Gamma enable */
-	#define COM13_UVSAT		0x40  /* UV saturation auto adjustment */
-	#define COM13_UVSWAP	0x01  /* V before U - w/TSLB */
-#define REG_COM14		0x3e  /* Control 14 */
-	#define COM14_DCWEN		0x10  /* DCW/PCLK-scale enable */
-#define REG_EDGE		0x3f  /* Edge enhancement factor */
-#define REG_COM15		0x40  /* Control 15 */
-	#define COM15_R10F0		0x00  /* Data range 10 to F0 */
-	#define COM15_R01FE		0x80  /*      01 to FE */
-	#define COM15_R00FF		0xc0  /*      00 to FF */
-	#define COM15_RGB565	0x10  /* RGB565 output */
-	#define COM15_RGB555	0x30  /* RGB555 output */
-#define REG_COM16		0x41  /* Control 16 */
-	#define COM16_AWBGAIN	0x08  /* AWB gain enable */
-#define REG_COM17		0x42  /* Control 17 */
-	#define COM17_AECWIN	0xc0  /* AEC window - must match COM4 */
-	#define COM17_CBAR		0x08  /* DSP Color bar */
-
-
 /*
-  This matrix defines how the colors are generated, must be
-  tweaked to adjust hue and saturation.
-  Order: v-red, v-green, v-blue, u-red, u-green, u-blue
-  They are nine-bit signed quantities, with the sign bit
-  stored in0x58.Sign for v-red is bit 0, and up from there.
-*/
-#define REG_CMATRIX_BASE	0x4f
-#define CMATRIX_LEN			6
-#define MTX1			0x4f  /* Matrix Coefficient 1 */
-#define MTX2			0x50  /* Matrix Coefficient 2 */
-#define MTX3			0x51  /* Matrix Coefficient 3 */
-#define MTX4			0x52  /* Matrix Coefficient 4 */
-#define MTX5			0x53  /* Matrix Coefficient 5 */
-#define MTX6			0x54  /* Matrix Coefficient 6 */
-#define REG_BRIGHT		0x55  /* Brightness */
-#define REG_CONTRAS		0x56  /* Contrast control */
-#define REG_CMATRIX_SIGN	0x58
-#define MTXS			0x58  /* Matrix Coefficient Sign */
-#define AWBC7			0x59  /* AWB Control 7 */
-#define AWBC8			0x5a  /* AWB Control 8 */
-#define AWBC9			0x5b  /* AWB Control 9 */
-#define AWBC10			0x5c  /* AWB Control 10 */
-#define AWBC11			0x5d  /* AWB Control 11 */
-#define AWBC12			0x5e  /* AWB Control 12 */
-#define REG_GFIX		0x69  /* Fix gain control */
-#define GGAIN			0x6a  /* G Channel AWB Gain */
-#define DBLV			0x6b
-#define AWBCTR3			0x6c  /* AWB Control 3 */
-#define AWBCTR2			0x6d  /* AWB Control 2 */
-#define AWBCTR1			0x6e  /* AWB Control 1 */
-#define AWBCTR0			0x6f  /* AWB Control 0 */
-#define REG_REG76		0x76  /* OV's name */
-	#define R76_BLKPCOR		0x80  /* Black pixel correction enable */
-	#define R76_WHTPCOR		0x40  /* White pixel correction enable */
-#define REG_RGB444		0x8c  /* RGB 444 control */
-	#define R444_ENABLE		0x02  /* Turn on RGB444, overrides 5x5 */
-	#define R444_RGBX		0x01  /* Empty nibble at end */
-#define REG_HAECC1		0x9f  /* Hist AEC/AGC control 1 */
-#define REG_HAECC2		0xa0  /* Hist AEC/AGC control 2 */
-#define REG_BD50MAX		0xa5  /* 50hz banding step limit */
-#define REG_HAECC3		0xa6  /* Hist AEC/AGC control 3 */
-#define REG_HAECC4		0xa7  /* Hist AEC/AGC control 4 */
-#define REG_HAECC5		0xa8  /* Hist AEC/AGC control 5 */
-#define REG_HAECC6		0xa9  /* Hist AEC/AGC control 6 */
-#define REG_HAECC7		0xaa  /* Hist AEC/AGC control 7 */
-#define REG_BD60MAX		0xab  /* 60hz banding step limit */
+ * This file is for the OpenMV project so the OV7670 can be used
+ * author: Juan Schiavoni <juanjoseschiavoni@hotmail.com>
+ *
+ * OV7670 register definitions.
+ */
+#ifndef __OV7670_REG_REGS_H__
+#define __OV7670_REG_REGS_H__
+#define GAIN                    0x00 /* AGC – Gain control gain setting  */
+#define BLUE                    0x01 /* AWB – Blue channel gain setting  */
+#define RED                     0x02 /* AWB – Red channel gain setting   */
+#define VREF                    0x03 /* AWB – Green channel gain setting */
+#define COM1			        0x04 /* Common Control 1 */
+#define BAVG                    0x05 /* U/B Average Level   */
+#define GAVG                    0x06 /* Y/Gb Average Level  */
+#define AECH                    0x07 /* Exposure VAlue - AEC MSB 5 bits  */
+#define RAVG                    0x08 /* V/R Average Level */
 
-#define REG_BATT 0xFF
+#define COM2                    0x09 /* Common Control 2 */
+#define COM2_SOFT_SLEEP         0x10 /* Soft sleep mode  */
+#define COM2_OUT_DRIVE_1x       0x00 /* Output drive capability 1x */
+#define COM2_OUT_DRIVE_2x       0x01 /* Output drive capability 2x */
+#define COM2_OUT_DRIVE_3x       0x02 /* Output drive capability 3x */
+#define COM2_OUT_DRIVE_4x       0x03 /* Output drive capability 4x */
 
-#include "ov7670.h"
+#define REG_PID                 0x0A /* Product ID Number MSB */
+#define REG_VER                 0x0B /* Product ID Number LSB */
 
-struct regval_list{
-	uint8_t reg_num;
-	uint8_t value;
-};
+#define COM3                    0x0C /* Common Control 3 		 */
+#define COM3_SWAP_OUT           0x40 /* Output data MSB/LSB swap */
+#define COM3_TRI_CLK            0x20 /* Tri-state output clock   */
+#define COM3_TRI_DATA           0x10 /* Tri-state option output  */
+#define COM3_SCALE_EN           0x08 /* Scale enable             */
+#define COM3_DCW                0x04 /* DCW enable               */
 
-static const struct regval_list vga_ov7670[] = {
-	/*
-	{ REG_COM14,	0x19 },
-	{ 0x72,			0x11 },
-	{ 0x73,			0xf1 },
-	*/
+#define COM4                    0x0D /* Common Control 4         */
+#define COM4_PLL_BYPASS         0x00 /* Bypass PLL               */
+#define COM4_PLL_4x             0x40 /* PLL frequency 4x         */
+#define COM4_PLL_6x             0x80 /* PLL frequency 6x         */
+#define COM4_PLL_8x             0xc0 /* PLL frequency 8x         */
+#define COM4_AEC_FULL           0x00 /* AEC evaluate full window */
+#define COM4_AEC_1_2            0x10 /* AEC evaluate 1/2 window  */
+#define COM4_AEC_1_4            0x20 /* AEC evaluate 1/4 window  */
+#define COM4_AEC_2_3            0x30 /* AEC evaluate 2/3 window  */
 
-	{ REG_HSTART,	0x13 },
-	{ REG_HSTOP,	0x01 },
-	{ REG_HREF,		0xF6 },	// was B6
-	{ REG_VSTART,	0x02 },
-	{ REG_VSTOP,	0x7a },
-	{ REG_VREF,		0x0a },
+#define COM5                    0x0E /* Common Control 5 */
+#define COM5_AFR                0x80 /* Auto frame rate control ON/OFF selection (night mode) */
+#define COM5_AFR_SPEED          0x40 /* Auto frame rate control speed selection */
+#define COM5_AFR_0              0x00 /* No reduction of frame rate          */
+#define COM5_AFR_1_2            0x10 /* Max reduction to 1/2 frame rate     */
+#define COM5_AFR_1_4            0x20 /* Max reduction to 1/4 frame rate     */
+#define COM5_AFR_1_8            0x30 /* Max reduction to 1/8 frame rate     */
+#define COM5_AFR_4x             0x04 /* Add frame when AGC reaches 4x gain  */
+#define COM5_AFR_8x             0x08 /* Add frame when AGC reaches 8x gain  */
+#define COM5_AFR_16x            0x0c /* Add frame when AGC reaches 16x gain */
+#define COM5_AEC_NO_LIMIT       0x01 /* No limit to AEC increase step       */
 
-	{ REG_BATT,		REG_BATT },		/* END MARKER */
-};
+#define COM6                    0x0F /* Common Control 6 */
+#define COM6_AUTO_WINDOW        0x01 /* Auto window setting ON/OFF selection when format changes */
 
-static const struct regval_list qvga_ov7670[] = {
-	{ REG_COM3,		COM3_DCWEN }, // enable downsamp/crop/window
+#define AEC                     0x10 /* AEC[7:0] (see register AECH for AEC[15:8]) */
+#define CLKRC                   0x11 /* Internal Clock */
 
-	{ REG_COM14,	0x19 },
-	{ 0x72,			0x11 },
-	{ 0x73,			0xf1 },
+#define COM7                    0x12 /* Common Control 7         */
+#define COM7_RESET              0x80 /* SCCB Register Reset      */
+#define COM7_RES_VGA            0x00 /* Resolution VGA           */
+#define COM7_RES_QVGA           0x40 /* Resolution QVGA          */
+#define COM7_BT656              0x20 /* BT.656 protocol ON/OFF   */
+#define COM7_SENSOR_RAW         0x10 /* Sensor RAW               */
+#define COM7_FMT_GBR422         0x00 /* RGB output format GBR422 */
+#define COM7_FMT_RGB565         0x04 /* RGB output format RGB565 */
+#define COM7_FMT_RGB555         0x08 /* RGB output format RGB555 */
+#define COM7_FMT_RGB444         0x0C /* RGB output format RGB444 */
+#define COM7_FMT_YUV            0x00 /* Output format YUV        */
+#define COM7_FMT_P_BAYER        0x01 /* Output format Processed Bayer RAW */
+#define COM7_FMT_RGB            0x04 /* Output format RGB        */
+#define COM7_FMT_R_BAYER        0x03 /* Output format Bayer RAW  */
+#define COM7_SET_FMT(r, x)      ((r&0xFC)|((x&0x5)<<0))
 
-	{ REG_HSTART,	0x16 },
-	{ REG_HSTOP,	0x04 },
-	{ REG_HREF,		0xa4 }, // was 24
-	{ REG_VSTART,	0x02 },
-	{ REG_VSTOP,	0x7a },
-	{ REG_VREF,		0x0a },
+#define COM8                    0x13 /* Common Control 8                */
+#define COM8_FAST_AUTO          0x80 /* Enable fast AGC/AEC algorithm   */
+#define COM8_STEP_VSYNC         0x00 /* AEC - Step size limited to vertical blank */
+#define COM8_STEP_UNLIMIT       0x40 /* AEC - Step size unlimited step size       */
+#define COM8_BANDF_EN           0x20 /* Banding filter ON/OFF */
+#define COM8_AEC_BANDF          0x10 /* Enable AEC below banding value */
+#define COM8_AEC_FINE_EN        0x08 /* Fine AEC ON/OFF control */
+#define COM8_AGC_EN             0x04 /* AGC Enable */
+#define COM8_AWB_EN             0x02 /* AWB Enable */
+#define COM8_AEC_EN             0x01 /* AEC Enable */
+#define COM8_SET_AGC(r, x)      ((r&0xFB)|((x&0x1)<<2))
+#define COM8_SET_AWB(r, x)      ((r&0xFD)|((x&0x1)<<1))
+#define COM8_SET_AEC(r, x)      ((r&0xFE)|((x&0x1)<<0))
 
-	{ REG_BATT,		REG_BATT },	/* END MARKER */
-};
+#define COM9                    0x14 /* Common Control 9 */
+#define COM9_HISTO_AVG          0x80 /* Histogram or average based AEC/AGC selection */
+#define COM9_AGC_GAIN_2x        0x00 /* Automatic Gain Ceiling 2x  */
+#define COM9_AGC_GAIN_4x        0x10 /* Automatic Gain Ceiling 4x  */
+#define COM9_AGC_GAIN_8x        0x20 /* Automatic Gain Ceiling 8x  */
+#define COM9_AGC_GAIN_16x       0x30 /* Automatic Gain Ceiling 16x */
+#define COM9_AGC_GAIN_32x       0x40 /* Automatic Gain Ceiling 32x */
+#define COM9_DROP_VSYNC         0x04 /* Drop VSYNC output of corrupt frame */
+#define COM9_DROP_HREF          0x02 /* Drop HREF output of corrupt frame  */
+#define COM9_SET_AGC(r, x)      ((r&0x8F)|((x&0x07)<<4))
 
-static const struct regval_list qqvga_ov7670[] = {
-	{ REG_COM3,		COM3_DCWEN }, // enable downsamp/crop/window
+#define COM10                   0x15 /* Common Control 10 */
+#define COM10_NEGATIVE          0x80 /* Output negative data */
+#define COM10_HSYNC_EN          0x40 /* HREF changes to HSYNC */
+#define COM10_PCLK_FREE         0x00 /* PCLK output option: free running PCLK */
+#define COM10_PCLK_MASK         0x20 /* PCLK output option: masked during horizontal blank  */
+#define COM10_PCLK_REV          0x10 /* PCLK reverse */
+#define COM10_HREF_REV          0x08 /* HREF reverse */
+#define COM10_VSYNC_FALLING     0x00 /* VSYNC changes on falling edge of PCLK */
+#define COM10_VSYNC_RISING      0x04 /* VSYNC changes on rising edge of PCLK */
+#define COM10_VSYNC_NEG         0x02 /* VSYNC negative */
+#define COM10_OUT_RANGE_8       0x01 /* Output data range: Full range */
+#define COM10_OUT_RANGE_10      0x00 /* Output data range: Data from [10] to [F0] (8 MSBs) */
 
-	{ REG_COM14,	0x1a },	// divide by 4
-	{ 0x72,			0x22 },		// downsample by 4
-	{ 0x73,			0xf2 },		// divide by 4
+#define RSVD_16                 0x16 /* Reserved register */
 
-	{ REG_HSTART,	0x16 },
-	{ REG_HSTOP,	0x04 },
-	{ REG_HREF,		0xa4 },
-	{ REG_VSTART,	0x02 },
-	{ REG_VSTOP,	0x7a },
-	{ REG_VREF,		0x0a },
-	
-	{ REG_BATT,		REG_BATT },	/* END MARKER */
-};
+#define HSTART                  0x17  /* Horizontal Frame (HREF column) Start high 8-bit(low 3 bits are at HREF[2:0]) */
+#define HSTOP                   0x18  /* Horizontal Frame (HREF column) end high 8-bit (low 3 bits are at HREF[5:3])  */
+#define VSTART                  0x19  /* Vertical Frame (row) Start high 8-bit (low 2 bits are at VREF[1:0]) */
+#define VSTOP                   0x1A  /* Vertical Frame (row) End high 8-bit (low 2 bits are at VREF[3:2]) */
+#define PSHFT                   0x1B  /* Data Format - Pixel Delay Select */
+#define REG_MIDH                0x1C  /* Manufacturer ID Byte – High */
+#define REG_MIDL                0x1D  /* Manufacturer ID Byte – Low */
 
-static const struct regval_list yuv422_ov7670[] = {
-	{ REG_COM7,		0x0 },	/* Selects YUV mode */
-	{ REG_RGB444,	0 },	/* No RGB444 please */
-	{ REG_COM1,		0 },
-	{ REG_COM15,	COM15_R00FF },
-	{ REG_COM9,		0x6A },	/* 128x gain ceiling; 0x8 is reserved bit */
-	{ MTX1,			0x80 },		/* "matrix coefficient 1" */
-	{ MTX2,			0x80 },		/* "matrix coefficient 2" */
-	{ MTX3,			0 },	/* vb */
-	{ MTX4,			0x22 },		/* "matrix coefficient 4" */
-	{ MTX5,			0x5e },		/* "matrix coefficient 5" */
-	{ MTX6,			0x80 },		/* "matrix coefficient 6" */
-	{ REG_COM13,	COM13_UVSAT }, /*COM13_GAMMA|*/
+#define MVFP			        0x1E  /* Mirror/Vflip Enable */
+#define   MVFP_MIRROR	        0x20  /* Mirror image */
+#define   MVFP_FLIP	            0x10  /* Vertical flip */
+#define   MVFP_SUN	            0x02  /* Black sun enable */
+#define MVFP_SET_MIRROR(r,x)	((r&0xDF)|((x&1)<<5)) /* change only bit5 according to x */
+#define MVFP_SET_FLIP(r,x)	    ((r&0xEF)|((x&1)<<4)) /* change only bit4 according to x */
 
-	{ REG_BATT,		REG_BATT },		/* END MARKER */
-};
+#define LAEC                    0x1F /* Fine AEC Value - defines exposure value less than one row period (Reserved?) */
+#define ADCCTR0                 0x20 /* ADC control */
+#define ADCCTR1			        0x21 /* reserved */
+#define ADCCTR2                 0x22 /* reserved */
+#define ADCCTR3                 0x23 /* reserved */
+#define AEW                     0x24 /* AGC/AEC - Stable Operating Region (Upper Limit) */
+#define AEB                     0x25 /* AGC/AEC - Stable Operating Region (Lower Limit) */
+#define VPT                     0x26 /* AGC/AEC Fast Mode Operating Region */
+#define BBIAS 			        0x27 /* B channel signal output bias (effective only when COM6[3]=1) */
+#define GbBIAS                  0x28 /* Gb channel signal output bias (effective only when COM6[3]=1) */
+#define RSVD_29                 0x29 /* reserved */
+#define EXHCH                   0x2A /* Dummy Pixel Insert MSB */
+#define EXHCL                   0x2B /* Dummy Pixel Insert LSB */
+#define RBIAS                   0x2C /* R channel signal output bias (effective only when COM6[3]=1) */
+#define ADVFL                   0x2D /* LSB of Insert Dummy Rows in Vertical Sync (1 bit equals 1 row)  */
+#define ADVFH                   0x2E /* MSB of Insert Dummy Rows in Vertical Sync */
+#define YAVE                    0x2F /* Y/G Channel Average Value */
+#define HSYST                   0x30 /* HSync rising edge delay */
+#define HSYEN                   0x31 /* HSync falling edge delay  */
+#define HREF                    0x32 /* Image Start and Size Control DIFFERENT CONTROL SEQUENCE	 */
+#define CHLF                    0x33 /* Array Current control  */
+#define ARBLM                   0x34 /* Array reference control */
+#define RSVD_35                 0x35 /* Reserved */
+#define RSVD_36                 0x36 /* Reserved */
+#define REG_ADC                     0x37 /* ADC control */
+#define ACOM                    0x38 /* ADC and analog common mode control */
+#define OFON                    0x39 /* ADC offset control */
+#define TSLB                    0x3A /* Line buffer test option  */
 
-static const struct regval_list rgb565_ov7670[] = {
-	{ REG_COM7,		COM7_RGB }, /* Selects RGB mode */
-	{ REG_RGB444,	0 },	  /* No RGB444 please */
-	{ REG_COM1,		0x0 },
-	{ REG_COM15,	COM15_RGB565|COM15_R00FF },
-	{ REG_COM9,		0x6A },	/* 128x gain ceiling; 0x8 is reserved bit */
-	{ MTX1,			0xb3 },		 /* "matrix coefficient 1" */
-	{ MTX2,			0xb3 },		 /* "matrix coefficient 2" */
-	{ MTX3,			0 },	/* vb */
-	{ MTX4,			0x3d },		 /* "matrix coefficient 4" */
-	{ MTX5,			0xa7 },		 /* "matrix coefficient 5" */
-	{ MTX6,			0xe4 },		 /* "matrix coefficient 6" */
-	{ REG_COM13,	COM13_UVSAT}, /*COM13_GAMMA|*/
+#define COM11                   0x3B /* Common control 11 */
+#define   COM11_EXP		        0x02
+#define   COM11_HZAUTO		    0x10 /* Auto detect 50/60 Hz */
 
-	{ REG_BATT,		REG_BATT },	/* END MARKER */
-};
+#define COM12                   0x3C /* Common control 12 */
 
-static const struct regval_list bayerRGB_ov7670[] = {
-	{ REG_COM7,		COM7_BAYER },
-	{ REG_COM13,	0x08 }, /* No gamma, magic rsvd bit */
-	{ REG_COM16,	0x3d }, /* Edge enhancement, denoise */
-	{ REG_REG76,	0xe1 }, /* Pix correction, magic rsvd */
+#define COM13                   0x3D /* Common control 13 */
+#define   COM13_GAMMA	        0x80 /* Gamma enable */
+#define	  COM13_UVSAT	        0x40 /* UV saturation auto adjustment */
 
-	{ REG_BATT,		REG_BATT },	/* END MARKER */
-};
+#define COM14                   0x3E /* Common Control 14 */
 
-static const struct regval_list ov7670_default_regs[] = {//from the linux driver
-	{REG_COM7, COM7_RESET},
-	{REG_TSLB,  0x04},	/* OV */
-	{REG_COM7, 0},	/* VGA */
-	/*
-	 * Set the hardware window.  These values from OV don't entirely
-	 * make sense - hstop is less than hstart.  But they work...
-	 */
-	{REG_HSTART, 0x13},	{REG_HSTOP, 0x01},
-	{REG_HREF, 0xb6},	{REG_VSTART, 0x02},
-	{REG_VSTOP, 0x7a},	{REG_VREF, 0x0a},
+#define EDGE                    0x3F /* edge enhancement adjustment */
+#define COM15                   0x40 /* Common Control 15 DIFFERENT CONTROLS */
+#define COM15_SET_RGB565(r,x)	((r&0xEF)|((x&1)<<4)) /* set rgb565 mode */
+#define   COM15_RGB565	        0x10 /* RGB565 output */
+#define   COM15_R00FF           0xC0 /* Output range: [00] to [FF] */
 
-	{REG_COM3, 0},	{REG_COM14, 0},
-	/* Mystery scaling numbers */
-	{0x70, 0x3a},		{0x71, 0x35},
-	{0x72, 0x11},		{0x73, 0xf0},
-	{0xa2,/* 0x02 changed to 1*/1},{REG_COM10, 0x0 }, // COM10_VS_NEG
-	/* Gamma curve values */
-	{0x7a, 0x20},		{0x7b, 0x10},
-	{0x7c, 0x1e},		{0x7d, 0x35},
-	{0x7e, 0x5a},		{0x7f, 0x69},
-	{0x80, 0x76},		{0x81, 0x80},
-	{0x82, 0x88},		{0x83, 0x8f},
-	{0x84, 0x96},		{0x85, 0xa3},
-	{0x86, 0xaf},		{0x87, 0xc4},
-	{0x88, 0xd7},		{0x89, 0xe8},
-	/* AGC and AEC parameters.  Note we start by disabling those features,
-	   then turn them only after tweaking the values. */
-	{REG_COM8, COM8_FASTAEC | COM8_AECSTEP},
-	{REG_GAIN, 0},	{REG_AECH, 0},
-	{REG_COM4, 0x40}, /* magic reserved bit */
-	{REG_COM9, 0x18}, /* 4x gain + magic rsvd bit */
-	{REG_BD50MAX, 0x05},	{REG_BD60MAX, 0x07},
-	{REG_AEW, 0x95},	{REG_AEB, 0x33},
-	{REG_VPT, 0xe3},	{REG_HAECC1, 0x78},
-	{REG_HAECC2, 0x68},	{0xa1, 0x03}, /* magic */
-	{REG_HAECC3, 0xd8},	{REG_HAECC4, 0xd8},
-	{REG_HAECC5, 0xf0},	{REG_HAECC6, 0x90},
-	{REG_HAECC7, 0x94},
-	{REG_COM8, COM8_FASTAEC|COM8_AECSTEP|COM8_AGC|COM8_AEC},
-	{0x30,0},{0x31,0},//disable some delays
-	/* Almost all of these are magic "reserved" values.  */
-	{REG_COM5, 0x61},	{REG_COM6, 0x4b},
-	{0x16, 0x02},		{REG_MVFP, 0x07},
-	{0x21, 0x02},		{0x22, 0x91},
-	{0x29, 0x07},		{0x33, 0x0b},
-	{0x35, 0x0b},		{0x37, 0x1d},
-	{0x38, 0x71},		{0x39, 0x2a},
-	{REG_COM12, 0x78},	{0x4d, 0x40},
-	{0x4e, 0x20},		{REG_GFIX, 0},
-	/*{0x6b, 0x4a},*/		{0x74,0x10},
-	{0x8d, 0x4f},		{0x8e, 0},
-	{0x8f, 0},		{0x90, 0},
-	{0x91, 0},		{0x96, 0},
-	{0x9a, 0},		{0xb0, 0x84},
-	{0xb1, 0x0c},		{0xb2, 0x0e},
-	{0xb3, 0x82},		{0xb8, 0x0a},
+#define COM16                   0x41 /* Common Control 16 DIFFERENT CONTROLS */
+#define COM16_AWBGAIN		    0x08 /* AWB gain enable */
+#define COM17                   0x42 /* Common Control 17   */
 
-	/* More reserved magic, some of which tweaks white balance */
-	{0x43, 0x0a},		{0x44, 0xf0},
-	{0x45, 0x34},		{0x46, 0x58},
-	{0x47, 0x28},		{0x48, 0x3a},
-	{0x59, 0x88},		{0x5a, 0x88},
-	{0x5b, 0x44},		{0x5c, 0x67},
-	{0x5d, 0x49},		{0x5e, 0x0e},
-	{0x6c, 0x0a},		{0x6d, 0x55},
-	{0x6e, 0x11},		{0x6f, 0x9e}, /* it was 0x9F "9e for advance AWB" */
-	{0x6a, 0x40},		{REG_BLUE, 0x40},
-	{REG_RED, 0x60},
-	{REG_COM8, COM8_FASTAEC|COM8_AECSTEP|COM8_AGC|COM8_AEC|COM8_AWB},
+#define AWBC1                   0x43 /* Reserved */
+#define AWBC2                  	0x44 /* Reserved */
+#define AWBC3                  	0x45 /* Reserved */
+#define AWBC4                   0x46 /* Reserved */
+#define AWBC5                  	0x47 /* Reserved */
+#define AWBC6                  	0x48 /* Reserved */
 
-	/* Matrix coefficients */
-	{0x4f, 0x80},		{0x50, 0x80},
-	{0x51, 0},		{0x52, 0x22},
-	{0x53, 0x5e},		{0x54, 0x80},
-	{0x58, 0x9e},
+#define RSVD_49			        0x49 /* Reserved */
+#define RSVD_4A			        0x4A /* Reserved */
 
-	{REG_COM16, COM16_AWBGAIN},	{REG_EDGE, 0},
-	{0x75, 0x05},		{REG_REG76, 0xe1},
-	{0x4c, 0},		{0x77, 0x01},
-	{REG_COM13, /*0xc3*/0x48},	{0x4b, 0x09},
-	{0xc9, 0x60},		/*{REG_COM16, 0x38},*/
-	{0x56, 0x40},
+#define REG4B                   0x4B /* Register 4B */
+#define DNSTH                   0x4C /* Denoise strength */
 
-	{0x34, 0x11},		{REG_COM11, COM11_EXP|COM11_HZAUTO},
-	{0xa4, 0x82/*Was 0x88*/},		{0x96, 0},
-	{0x97, 0x30},		{0x98, 0x20},
-	{0x99, 0x30},		{0x9a, 0x84},
-	{0x9b, 0x29},		{0x9c, 0x03},
-	{0x9d, 0x4c},		{0x9e, 0x3f},
-	{0x78, 0x04},
+#define RSVD_4D			        0x4D /* Reserved */
+#define RSVD_4E			        0x4E /* Reserved */
 
-	/* Extra-weird stuff.  Some sort of multiplexor register */
-	{0x79, 0x01},		{0xc8, 0xf0},
-	{0x79, 0x0f},		{0xc8, 0x00},
-	{0x79, 0x10},		{0xc8, 0x7e},
-	{0x79, 0x0a},		{0xc8, 0x80},
-	{0x79, 0x0b},		{0xc8, 0x01},
-	{0x79, 0x0c},		{0xc8, 0x0f},
-	{0x79, 0x0d},		{0xc8, 0x20},
-	{0x79, 0x09},		{0xc8, 0x80},
-	{0x79, 0x02},		{0xc8, 0xc0},
-	{0x79, 0x03},		{0xc8, 0x40},
-	{0x79, 0x05},		{0xc8, 0x30},
-	{0x79, 0x26},
+#define MTX1                    0x4F /* Matrix coefficient 1 */
+#define MTX2                    0x50 /* Matrix coefficient 2 */
+#define MTX3                    0x51 /* Matrix coefficient 3 */
+#define MTX4                    0x52 /* Matrix coefficient 4 */
+#define MTX5                    0x53 /* Matrix coefficient 5 */
+#define MTX6                    0x54 /* Matrix coefficient 6 */
+#define BRIGHTNESS              0x55 /* Brightness control */
+#define CONTRAST		        0x56 /* Contrast control */
+#define CONTRASCENTER           0x57 /* Contrast center */
+#define MTXS			        0x58 /* Matrix coefficient sign for coefficient 5 to 0*/
 
-	{0xff, 0xff},	/* END MARKER */
-};
+#define RSVD_59			        0x59 /* Reserved */
+#define RSVD_5A			        0x5A /* Reserved */
+#define RSVD_5B			        0x5B /* Reserved */
+#define RSVD_5C			        0x5C /* Reserved */
+#define RSVD_5D			        0x5D /* Reserved */
+#define RSVD_5E			        0x5E /* Reserved */
+#define RSVD_5F			        0x5F /* Reserved */
+#define RSVD_60			        0x60 /* Reserved */
+#define RSVD_61			        0x61 /* Reserved */
 
+#define LCC1                    0x62 /* Lens correction option 1  */
 
-#endif /* OV7670_OV7670REG_H_ */
+#define LCC2                    0x63 /* Lens correction option 2 */
+#define LCC3 			        0x64 /* Lens correction option 3 */
+#define LCC4			        0x65 /* Lens correction option 4 */
+#define LCC5			        0x66 /* Lens correction option 5 */
+
+#define MANU       		        0x67 /* Manual U Value      */
+#define MANV      		        0x68 /* Manual V Value */
+#define GFIX                    0x69 /* Fix gain control */
+#define GGAIN                   0x6A /* G channel AWB gain */
+
+#define DBLV               	    0x6B /* PLL and clock ? */
+
+#define AWBCTR3               	0x6C /* AWB Control 3  */
+#define AWBCTR2	                0x6D /* AWB Control 2  */
+#define AWBCTR1                 0x6E /* AWB Control 1  */
+#define AWBCTR0                 0x6F /* AWB Control 0  */
+#define SCALING_XSC             0x70 /* test pattern and horizontal scaling factor */
+#define SCALING_XSC_CBAR(r)	(r&0x7F) /* make sure bit7 is 0 for color bar */
+#define SCALING_YSC             0x71 /* test pattern and vertical scaling factor */
+#define SCALING_YSC_CBAR(r,x)	((r&0x7F)|((x&1)<<7)) /* change bit7 for color bar on/off */
+#define SCALING_DCWCTR          0x72 /* DCW control */
+#define SCALING_PCLK_DIV        0x73 /*  */
+#define REG74                   0x74 /*  */
+#define REG75                   0x75 /*  */
+#define REG76                   0x76 /*  */
+#define REG77	             	0x77 /*  */
+
+#define RSVD_78      		    0x78 /* Reserved */
+#define RSVD_79              	0x79 /* Reserved */
+
+#define SLOP	                0x7A /* Gamma curve highest segment slope */
+#define GAM1	                0x7B /* Gamma Curve 1st Segment Input End Point 0x04 Output Value */
+#define GAM2	                0x7C /* Gamma Curve 2nd Segment Input End Point 0x08 Output Value */
+#define GAM3                    0x7D /* Gamma Curve 3rd Segment Input End Point 0x10 Output Value */
+#define GAM4                    0x7E /* Gamma Curve 4th Segment Input End Point 0x20 Output Value */
+#define GAM5                    0x7F /* Gamma Curve 5th Segment Input End Point 0x28 Output Value */
+#define GAM6                    0x80 /* Gamma Curve 6rd Segment Input End Point 0x30 Output Value */
+#define GAM7                    0x81 /* Gamma Curve 7th Segment Input End Point 0x38 Output Value */
+#define GAM8                    0x82 /* Gamma Curve 8th Segment Input End Point 0x40 Output Value */
+#define GAM9                    0x83 /* Gamma Curve 9th Segment Input End Point 0x48 Output Value */
+#define GAM10                   0x84 /* Gamma Curve 10th Segment Input End Point 0x50 Output Value */
+#define GAM11                   0x85 /* Gamma Curve 11th Segment Input End Point 0x60 Output Value */
+#define GAM12                   0x86 /* Gamma Curve 12th Segment Input End Point 0x70 Output Value */
+#define GAM13                   0x87 /* Gamma Curve 13th Segment Input End Point 0x90 Output Value */
+#define GAM14                   0x88 /* Gamma Curve 14th Segment Input End Point 0xB0 Output Value */
+#define GAM15                   0x89 /* Gamma Curve 15th Segment Input End Point 0xD0 Output Value */
+
+#define RSVD_8A      		    0x8A /* Reserved */
+#define RSVD_8B              	0x8B /* Reserved */
+
+#define RGB444                  0x8C /*  */
+
+#define RSVD_8D      		    0x8D /* Reserved */
+#define RSVD_8E              	0x8E /* Reserved */
+#define RSVD_8F      		    0x8F /* Reserved */
+#define RSVD_90              	0x90 /* Reserved */
+#define RSVD_91      		    0x91 /* Reserved */
+
+#define DM_LNL                  0x92 /* Dummy line low 8 bit */
+#define DM_LNH                  0x93 /* Dummy line high 8 bit */
+#define LCC6                    0x94 /* Lens correction option 6 */
+#define LCC7                    0x95 /* Lens correction option 7 */
+
+#define RSVD_96      		    0x96 /* Reserved */
+#define RSVD_97              	0x97 /* Reserved */
+#define RSVD_98      		    0x98 /* Reserved */
+#define RSVD_99              	0x99 /* Reserved */
+#define RSVD_9A      		    0x9A /* Reserved */
+#define RSVD_9B              	0x9B /* Reserved */
+#define RSVD_9C      		    0x9C /* Reserved */
+
+#define BD50ST			        0x9D /* 50 Hz banding filter value */
+#define BD60ST                  0x9E /* 60 Hz banding filter value */
+#define HAECC1                  0x9F /* Histogram-based AEC/AGC control 1 */
+#define HAECC2                  0xA0 /* Histogram-based AEC/AGC control 2 */
+
+#define RSVD_A1      		    0xA1 /* Reserved */
+
+#define SCALING_PCLK_DELAY      0xA2 /* Pixel clock delay */
+
+#define RSVD_A3      		    0xA3 /* Reserved */
+
+#define NT_CNTRL                0xA4 /*  */
+#define BD50MAX			        0xA5 /* 50 Hz banding step limit */
+#define HAECC3                  0xA6 /* Histogram-based AEC/AGC control 3  */
+#define HAECC4 	   	            0xA7 /* Histogram-based AEC/AGC control 4           */
+#define HAECC5		            0xA8 /* Histogram-based AEC/AGC control 5         */
+#define HAECC6		            0xA9 /* Histogram-based AEC/AGC control 6           */
+
+#define HAECC7		            0xAA /* Histogram-based AEC/AGC control 7           */
+#define 	HAECC_EN      	    0x80 /* Histogram-based AEC algorithm enable      */
+
+#define BD60MAX                 0xAB /* 60 Hz banding step limit */
+
+#define STR_OPT                 0xAC /* Register AC */
+#define STR_R			        0xAD /* R gain for led output frame */
+#define STR_G			        0xAE /* G gain for led output frame */
+#define STR_B			        0xAF /* B gain for led output frame */
+#define RSVD_B0      		    0xB0 /* Reserved */
+#define ABLC1			        0xB1 /* */
+#define RSVD_B2      		    0xB2 /* Reserved */
+#define THL_ST			        0xB3 /* ABLC target */
+#define THL_DLT			        0xB5 /* ABLC stable range */
+
+#define RSVD_B6      		    0xB6 /* Reserved */
+#define RSVD_B7      		    0xB7 /* Reserved */
+#define RSVD_B8      		    0xB8 /* Reserved */
+#define RSVD_B9      		    0xB9 /* Reserved */
+#define RSVD_BA      		    0xBA /* Reserved */
+#define RSVD_BB      		    0xBB /* Reserved */
+#define RSVD_BC      		    0xBC /* Reserved */
+#define RSVD_BD      	    	0xBD /* Reserved */
+
+#define AD_CHB			        0xBE /* blue channel black level compensation */
+#define AD_CHR			        0xBF /* Red channel black level compensation */
+#define AD_CHGb			        0xC0 /* Gb channel black level compensation */
+#define AD_CHGr			        0xC1 /* Gr channel black level compensation */
+
+#define RSVD_C2      		    0xC2 /* Reserved */
+#define RSVD_C3      		    0xC3 /* Reserved */
+#define RSVD_C4      		    0xC4 /* Reserved */
+#define RSVD_C5      		    0xC5 /* Reserved */
+#define RSVD_C6      		    0xC6 /* Reserved */
+#define RSVD_C7      		    0xC7 /* Reserved */
+#define RSVD_C8      		    0xC8 /* Reserved */
+
+#define SATCTR			        0xC9 /* Saturation control */
+#define SET_REG(reg, x)         (##reg_DEFAULT|x)
+
+#endif //__OV7670_REG_REGS_H__

@@ -77,18 +77,22 @@ int ferror(FILE *f){
 }
 /* PRINTF REDIRECT to UART END */
 
-uint32_t buffCAM[RES_VGA_W * 16];
+uint32_t buffCAM[RES_QQVGA_W * RES_QQVGA_H * 2 / 4];
 
 int aa = 0;
 int bb = 0;
 
+uint32_t last;
+
 
 void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
+	uint32_t now = HAL_GetTick();
   //printf("FRAME %d\n", HAL_GetTick());
-	printf("%d %d\n", aa, bb);
+	printf("%d %d %f\r\n", aa, bb, 1000.0 / (now  - last));
 	aa = 0;
 	bb = 0;
+	last = now;
 }
 
 void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
@@ -116,6 +120,12 @@ int main(void)
 
   /* USER CODE END 1 */
 
+  /* Enable I-Cache---------------------------------------------------------*/
+  SCB_EnableICache();
+
+  /* Enable D-Cache---------------------------------------------------------*/
+  SCB_EnableDCache();
+
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -142,17 +152,24 @@ int main(void)
 	ov7670_init(&hdcmi, &hi2c2);
 	
 	
-	HAL_Delay(500);
+	HAL_Delay(1000);
 	
-	HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)buffCAM, RES_VGA_W * 16);
+	HAL_DCMI_Stop(&hdcmi);
+	
+	HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, RES_QQVGA_W * RES_QQVGA_H * 2 / 4);
 	
 	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+	uint32_t me = last;
   while (1)
   {
+		if (me != last) {
+			HAL_UART_Transmit(&huart3, (uint8_t *)buffCAM, RES_QQVGA_W * RES_QQVGA_H * 2, 1000);
+			me = last;
+		}
 		// printf("1234567890\r\n");
 		// HAL_UART_Transmit(&huart3, (unsigned char *)"1234567890\r\n", 12, 500);
 		// HAL_Delay(1);
