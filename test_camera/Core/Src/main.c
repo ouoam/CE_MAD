@@ -77,7 +77,9 @@ int ferror(FILE *f){
 }
 /* PRINTF REDIRECT to UART END */
 
-uint32_t buffCAM[RES_QQVGA_W * RES_QQVGA_H * 2 / 4];
+#define BUFF_LINE 40
+
+uint32_t buffCAM[BUFF_LINE][RES_QQVGA_W * 2 / 4];
 
 int aa = 0;
 int bb = 0;
@@ -89,11 +91,12 @@ void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 	uint32_t now = HAL_GetTick();
   //printf("FRAME %d\n", HAL_GetTick());
 	//printf("%d %d %f\r\n", aa, bb, 1000.0 / (now  - last));
-	printf("*RDY*");
+	// printf("*RDY*");
+	HAL_UART_Transmit(&huart3, "*RDY*", 5, 100);
 	aa = 0;
 	bb = 0;
 	last = now;
-	HAL_UART_Transmit(&huart3, (uint8_t *)buffCAM, RES_QQVGA_W * RES_QQVGA_H * 2, 1000);
+	//HAL_UART_Transmit(&huart3, (uint8_t *)buffCAM, RES_QQVGA_W * RES_QQVGA_H * 2, 1000);
 }
 
 void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
@@ -104,7 +107,15 @@ void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
 
 void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
-  //printf("HSYNC %d\n", HAL_GetTick());
+	//printf("HSYNC %d\n", HAL_GetTick());
+	//HAL_UART_Transmit(&huart3, (uint8_t*)buffCAM[aa%BUFF_LINE], RES_QQVGA_W * 2, 1000);
+	while (huart3.gState != HAL_UART_STATE_READY);
+	if(HAL_UART_Transmit_DMA(&huart3, (uint8_t*)buffCAM[aa%BUFF_LINE], RES_QQVGA_W * 2)!= HAL_OK)
+	{
+		NVIC_SystemReset();
+		/* Transfer error in transmission process */
+		Error_Handler();
+	}
 	aa++;
 }
 
@@ -152,13 +163,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	ov7670_init(&hdcmi, &hi2c2);
 	
-	
-	HAL_Delay(1000);
+	HAL_Delay(100);
 	
 	HAL_DCMI_Stop(&hdcmi);
-	
-	HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, RES_QQVGA_W * RES_QQVGA_H * 2 / 4);
-	
+	HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, BUFF_LINE * RES_QQVGA_W * 2 / 4);
 	
   /* USER CODE END 2 */
 

@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import time
 import os
+import sys
 
 
 class Camera:
@@ -14,7 +15,7 @@ class Camera:
 
         self.serial = serial.Serial()
         self.serial.port = port
-        self.serial.baudrate = 1000000
+        self.serial.baudrate = 2000000
         self.serial.bytesize = serial.EIGHTBITS
         self.serial.stopbits = serial.STOPBITS_ONE
         self.serial.parity = serial.PARITY_NONE
@@ -50,7 +51,7 @@ class Camera:
 
         while not self.isImageStart():
             pass
-        print("start")
+        # print("start")
         i = 0
         frame_raw = bytearray()
         while i < self.height * self.width * 2:
@@ -93,7 +94,16 @@ cam = Camera('COM3')
 cam.connect()
 time.sleep(2)
 
+last = time.time()
+
 while True:
-    img, Err = cam.getImg()
-    print("Hi")
-    cam.display(img)
+    try:
+        img, Err = cam.getImg()
+        now = time.time()
+        print("Hi", 1 / (now - last))
+        last = now
+        cam.display(img)
+    except KeyboardInterrupt:
+        sys.exit()
+    except:
+        pass
