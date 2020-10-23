@@ -117,7 +117,7 @@ void HAL_DCMI_MspInit(DCMI_HandleTypeDef* dcmiHandle)
 
     /* DCMI DMA Init */
     /* DCMI Init */
-    hdma_dcmi.Instance = DMA2_Stream1;
+    hdma_dcmi.Instance = DMA2_Stream7;
     hdma_dcmi.Init.Channel = DMA_CHANNEL_1;
     hdma_dcmi.Init.Direction = DMA_PERIPH_TO_MEMORY;
     hdma_dcmi.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -138,7 +138,7 @@ void HAL_DCMI_MspInit(DCMI_HandleTypeDef* dcmiHandle)
     __HAL_LINKDMA(dcmiHandle,DMA_Handle,hdma_dcmi);
 
     /* DCMI interrupt Init */
-    HAL_NVIC_SetPriority(DCMI_IRQn, 2, 0);
+    HAL_NVIC_SetPriority(DCMI_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(DCMI_IRQn);
   /* USER CODE BEGIN DCMI_MspInit 1 */
 

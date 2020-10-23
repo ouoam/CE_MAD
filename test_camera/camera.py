@@ -15,7 +15,7 @@ class Camera:
 
         self.serial = serial.Serial()
         self.serial.port = port
-        self.serial.baudrate = 2000000
+        self.serial.baudrate = 2250000
         self.serial.bytesize = serial.EIGHTBITS
         self.serial.stopbits = serial.STOPBITS_ONE
         self.serial.parity = serial.PARITY_NONE
@@ -23,10 +23,10 @@ class Camera:
 
     def connect(self):
         self.serial.open()
-        while not self.isImageStart():
-            pass
-        print("finish init camera")
-        cv2.startWindowThread()
+#        while not self.isImageStart():
+#            pass
+#        print("finish init camera")
+#        cv2.startWindowThread()
 
     def read(self):
         raw = self.serial.read()

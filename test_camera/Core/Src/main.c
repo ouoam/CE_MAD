@@ -165,7 +165,6 @@ int main(void)
 	
 	HAL_Delay(100);
 	
-	HAL_DCMI_Stop(&hdcmi);
 	HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, BUFF_LINE * RES_QQVGA_W * 2 / 4);
 	
   /* USER CODE END 2 */
