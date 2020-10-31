@@ -75,3 +75,21 @@
 .metadata/
 
 RemoteSystemsTempFiles/
+
+# STM32Cube IDE
+  
+build/
+Debug/
+
+build.zip
+
+*.log
+*.bak
+.lock
+*.tmp
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
