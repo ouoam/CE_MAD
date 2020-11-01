@@ -4,3 +4,8 @@ param
 retval
 int
 &hdcmi
+hdcmi
+addtogroup
+jpg
+hjpeg
+jpeg

@@ -166,12 +166,12 @@ int main(void)
 	ov7670_init(&hdcmi, &hi2c2);
 	
 	HAL_Delay(100);
-	
-	HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
 
 	//HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, BUFF_LINE * RES_QQVGA_W * 2 / 4);
 	
   /* USER CODE END 2 */
+
+	uint8_t round = 0;
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -190,7 +190,7 @@ int main(void)
 		  */
 
 
-      buffCAM[i % BUFF_LINE][j] = 0x007F007F |
+      buffCAM[i % BUFF_LINE][j] = round << 16 | round |
                                   (uint8_t)(i * 255 / (RES_QQVGA_H-1)) << 24 |
                                   (uint8_t)(j * 255 / (RES_QQVGA_W/2-1)) << 8;
 
@@ -199,6 +199,7 @@ int main(void)
       HAL_Delay(1000/RES_QQVGA_H/2);
     }
     HAL_DCMI_FrameEventCallback(&hdcmi);
+    round+=8;
     //HAL_Delay(5000);
 		// printf("1234567890\r\n");
 		// HAL_UART_Transmit(&huart3, (unsigned char *)"1234567890\r\n", 12, 500);
@@ -279,6 +280,32 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+  * @brief  Get the images sizes from BMP header.
+  * @param  pInfo : pointer to the Info structure
+  * @retval None
+  */
+void RGB_GetInfo(JPEG_ConfTypeDef *pInfo)
+{
+  /* Read Images Sizes */
+  pInfo->ImageWidth         = RES_QQVGA_W;
+  pInfo->ImageHeight        = RES_QQVGA_H;
+
+  /* Jpeg Encoding Setting to be setted by users */
+  pInfo->ChromaSubsampling  = JPEG_CHROMA_SAMPLING;
+  pInfo->ColorSpace         = JPEG_COLOR_SPACE;
+  pInfo->ImageQuality       = JPEG_IMAGE_QUALITY;
+
+  /*Check if Image Sizes meets the requirements */
+  if (((pInfo->ImageWidth % 8) != 0 ) || ((pInfo->ImageHeight % 8) != 0 ) || \
+      (((pInfo->ImageWidth % 16) != 0 ) && (pInfo->ColorSpace == JPEG_YCBCR_COLORSPACE) && (pInfo->ChromaSubsampling != JPEG_444_SUBSAMPLING)) || \
+      (((pInfo->ImageHeight % 16) != 0 ) && (pInfo->ColorSpace == JPEG_YCBCR_COLORSPACE) && (pInfo->ChromaSubsampling == JPEG_420_SUBSAMPLING)))
+  {
+    Error_Handler();
+  }
+
+}
 
 /* USER CODE END 4 */
 
