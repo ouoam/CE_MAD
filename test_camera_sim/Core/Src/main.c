@@ -29,7 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ov7670.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -78,9 +78,7 @@ int ferror(FILE *f){
 }
 /* PRINTF REDIRECT to UART END */
 
-#define BUFF_LINE 40
-
-uint32_t buffCAM[BUFF_LINE][RES_QQVGA_W * 2 / 4];
+uint8_t buffCAM[MAX_INPUT_LINES][FRAME_SIZE_WIDTH * 2];
 
 int aa = 0;
 int bb = 0;
@@ -97,7 +95,7 @@ void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 	aa = 0;
 	bb = 0;
 	last = now;
-	//HAL_UART_Transmit(&huart3, (uint8_t *)buffCAM, RES_QQVGA_W * RES_QQVGA_H * 2, 1000);
+	//HAL_UART_Transmit(&huart3, (uint8_t *)buffCAM, FRAME_SIZE_WIDTH * FRAME_SIZE_HEIGHT * 2, 1000);
 }
 
 void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
@@ -106,17 +104,40 @@ void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
 	bb++;
 }
 
+#define CHUNK_SIZE_IN1   ((uint32_t)(FRAME_SIZE_WIDTH * 2 * MAX_INPUT_LINES))
+#define MCU_PER_BUFF    ((uint32_t)(FRAME_SIZE_WIDTH * 2 * MAX_INPUT_LINES) / (4 * 8 * 8))
+uint8_t MCU_Data_IntBuffer1[MCU_PER_BUFF][4][8][8];
+
 void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
 	//printf("HSYNC %d\n", HAL_GetTick());
-	//HAL_UART_Transmit(&huart3, (uint8_t*)buffCAM[aa%BUFF_LINE], RES_QQVGA_W * 2, 1000);
+	//HAL_UART_Transmit(&huart3, (uint8_t*)buffCAM[aa%MAX_INPUT_LINES], FRAME_SIZE_WIDTH * 2, 1000);
 	while (huart3.gState != HAL_UART_STATE_READY);
-	if(HAL_UART_Transmit_DMA(&huart3, (uint8_t*)buffCAM[aa%BUFF_LINE], RES_QQVGA_W * 2)!= HAL_OK)
+	if(HAL_UART_Transmit_DMA(&huart3, buffCAM[aa%MAX_INPUT_LINES], FRAME_SIZE_WIDTH * 2)!= HAL_OK)
 	{
 		NVIC_SystemReset();
 		/* Transfer error in transmission process */
 		Error_Handler();
 	}
+
+  uint8_t buffLine = aa%MAX_INPUT_LINES;
+
+  for (int j = 0; j < FRAME_SIZE_WIDTH * 2; j+=4) {
+    uint32_t MCUindex = j / (8 * 2 * 2);
+    uint32_t MCUindexBlock = (j/(8*2)) % 2;
+    MCU_Data_IntBuffer1[MCUindex][MCUindexBlock][buffLine][(j/2) % 8]   = buffCAM[buffLine][j + 0];
+    MCU_Data_IntBuffer1[MCUindex][MCUindexBlock][buffLine][(j/2+1) % 8] = buffCAM[buffLine][j + 2];
+
+    MCU_Data_IntBuffer1[MCUindex][2][buffLine][(j/4) % 8] = buffCAM[buffLine][j + 1];
+    MCU_Data_IntBuffer1[MCUindex][3][buffLine][(j/4) % 8] = buffCAM[buffLine][j + 3];
+  }
+
+  if (aa == 7) {
+    // JPEG_Encode_DMA(&hjpeg, )
+  } else if (aa % 8 == 7) {
+
+  }
+
 	aa++;
 }
 
@@ -163,11 +184,11 @@ int main(void)
   MX_I2S3_Init();
   MX_JPEG_Init();
   /* USER CODE BEGIN 2 */
-	ov7670_init(&hdcmi, &hi2c2);
+	//ov7670_init(&hdcmi, &hi2c2);
 	
 	HAL_Delay(100);
 
-	//HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, BUFF_LINE * RES_QQVGA_W * 2 / 4);
+	//HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
 	
   /* USER CODE END 2 */
 
@@ -177,26 +198,31 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    for (int i = 0; i < RES_QQVGA_H; i++) {
-      for (int j = 0; j < RES_QQVGA_W / 2; j++) {
+    for (int i = 0; i < FRAME_SIZE_HEIGHT; i++) {
+      for (int j = 0; j < FRAME_SIZE_WIDTH * 2; j+=4) {
     	  /*
-		  switch (j / (RES_QQVGA_W / 2 /5)) {
-		  case 0: buffCAM[i % BUFF_LINE][j] = 0x007F007F; break;
-		  case 1: buffCAM[i % BUFF_LINE][j] = 0x7F7F007F; break;
-		  case 2: buffCAM[i % BUFF_LINE][j] = 0xFF7F007F; break;
-		  case 3: buffCAM[i % BUFF_LINE][j] = 0x007F7F7F; break;
-		  case 4: buffCAM[i % BUFF_LINE][j] = 0x007FFF7F; break;
+		  switch (j / (FRAME_SIZE_WIDTH / 2 /5)) {
+		  case 0: buffCAM[i % MAX_INPUT_LINES][j] = 0x007F007F; break;
+		  case 1: buffCAM[i % MAX_INPUT_LINES][j] = 0x7F7F007F; break;
+		  case 2: buffCAM[i % MAX_INPUT_LINES][j] = 0xFF7F007F; break;
+		  case 3: buffCAM[i % MAX_INPUT_LINES][j] = 0x007F7F7F; break;
+		  case 4: buffCAM[i % MAX_INPUT_LINES][j] = 0x007FFF7F; break;
 		  }
 		  */
+/*
+      buffCAM[i % MAX_INPUT_LINES][j] = round << 16 | round |
+                                  (uint8_t)(i * 255 / (FRAME_SIZE_HEIGHT-1)) << 24 |
+                                  (uint8_t)(j * 255 / (FRAME_SIZE_WIDTH/2-1)) << 8;
+      */
 
-
-      buffCAM[i % BUFF_LINE][j] = round << 16 | round |
-                                  (uint8_t)(i * 255 / (RES_QQVGA_H-1)) << 24 |
-                                  (uint8_t)(j * 255 / (RES_QQVGA_W/2-1)) << 8;
+      buffCAM[i % MAX_INPUT_LINES][j + 0] = round;
+        buffCAM[i % MAX_INPUT_LINES][j + 1] = j * 255 / (FRAME_SIZE_WIDTH * 2-1);
+      buffCAM[i % MAX_INPUT_LINES][j + 2] = round;
+      buffCAM[i % MAX_INPUT_LINES][j + 3] = i * 255 / (FRAME_SIZE_HEIGHT-1);
 
       }
       HAL_DCMI_LineEventCallback(&hdcmi);
-      HAL_Delay(1000/RES_QQVGA_H/2);
+      HAL_Delay(1000/FRAME_SIZE_HEIGHT/2);
     }
     HAL_DCMI_FrameEventCallback(&hdcmi);
     round+=8;
@@ -289,10 +315,10 @@ void SystemClock_Config(void)
 void RGB_GetInfo(JPEG_ConfTypeDef *pInfo)
 {
   /* Read Images Sizes */
-  pInfo->ImageWidth         = RES_QQVGA_W;
-  pInfo->ImageHeight        = RES_QQVGA_H;
+  pInfo->ImageWidth         = FRAME_SIZE_WIDTH;
+  pInfo->ImageHeight        = FRAME_SIZE_HEIGHT;
 
-  /* Jpeg Encoding Setting to be setted by users */
+  /* Jpeg Encoding Setting to be set by users */
   pInfo->ChromaSubsampling  = JPEG_CHROMA_SAMPLING;
   pInfo->ColorSpace         = JPEG_COLOR_SPACE;
   pInfo->ImageQuality       = JPEG_IMAGE_QUALITY;

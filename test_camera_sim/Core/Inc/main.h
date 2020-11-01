@@ -36,6 +36,8 @@ extern "C" {
 #include <stdio.h>
 #include "jpeg_utils.h"
 #include "encode_dma.h"
+
+#include "ov7670.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -72,11 +74,14 @@ void RGB_GetInfo(JPEG_ConfTypeDef *pInfo);
 #define LD3_Pin GPIO_PIN_14
 #define LD3_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+#define FRAME_SIZE        (FRAMESIZE_QQVGA)
+#define FRAME_SIZE_WIDTH  (RES_QQVGA_W)
+#define FRAME_SIZE_HEIGHT (RES_QQVGA_H)
+
 #define JPEG_CHROMA_SAMPLING     JPEG_422_SUBSAMPLING   /* Select Chroma Sampling: JPEG_420_SUBSAMPLING, JPEG_422_SUBSAMPLING, JPEG_444_SUBSAMPLING   */
 #define JPEG_COLOR_SPACE         JPEG_YCBCR_COLORSPACE  /* Select Color Space: JPEG_YCBCR_COLORSPACE, JPEG_GRAYSCALE_COLORSPACE, JPEG_CMYK_COLORSPACE */
 #define JPEG_IMAGE_QUALITY       75                     /* Set Image Quality for Jpeg Encoding */
-#define MAX_INPUT_WIDTH          800                    /* Set the Maximum of BMP images Width to be tested */
-#define MAX_INPUT_LINES          16                     /* Set Input buffer lines to 16 for YCbCr420, and 8 for YCbCr422 and YCbCr444 (to save RAM space) */
+#define MAX_INPUT_LINES          8                      /* Set Input buffer lines to 16 for YCbCr420, and 8 for YCbCr422 and YCbCr444 (to save RAM space) */
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

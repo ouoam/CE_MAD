@@ -422,7 +422,7 @@ HAL_StatusTypeDef ov7670_init(DCMI_HandleTypeDef *p_hdcmi, I2C_HandleTypeDef *p_
   printf("[OV7670] pid = %02X\r\n", SCCB_Read(REG_PID));
 	printf("[OV7670] ver = %02X\r\n", SCCB_Read(REG_VER));
 	
-	set_framesize(FRAMESIZE_QQVGA);
+	set_framesize(FRAME_SIZE);
 	set_pixformat(PIXFORMAT_YUV422);
 
 	/*

@@ -1,32 +1,32 @@
 /**
-  ******************************************************************************
-  * @file    JPEG/JPEG_EncodingFromFLASH_DMA/Src/encode_dma.c
-  * @author  MCD Application Team
-  * @brief   This file provides routines for JPEG Encoding from memory with
-  *          DMA method.
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2016 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    JPEG/JPEG_EncodingFromFLASH_DMA/Src/encode_dma.c
+ * @author  MCD Application Team
+ * @brief   This file provides routines for JPEG Encoding from memory with
+ *          DMA method.
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2016 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
+ *
+ ******************************************************************************
+ */
 
 /* Includes ------------------------------------------------------------------*/
 #include "encode_dma.h"
 /** @addtogroup STM32F7xx_HAL_Examples
-  * @{
-  */
+ * @{
+ */
 
 /** @addtogroup JPEG_EncodingFromFLASH_DMA
-  * @{
-  */
+ * @{
+ */
 
 /* Private typedef -----------------------------------------------------------*/
 typedef struct
@@ -46,7 +46,7 @@ typedef struct
 #define BYTES_PER_PIXEL    2
 #endif
 
-#define CHUNK_SIZE_IN   ((uint32_t)(MAX_INPUT_WIDTH * BYTES_PER_PIXEL * MAX_INPUT_LINES))
+#define CHUNK_SIZE_IN   ((uint32_t)(FRAME_SIZE_WIDTH * BYTES_PER_PIXEL * MAX_INPUT_LINES))
 #define CHUNK_SIZE_OUT  ((uint32_t) (4096))
 
 #define JPEG_BUFFER_EMPTY       0
@@ -57,10 +57,8 @@ typedef struct
 JPEG_RGBToYCbCr_Convert_Function pRGBToYCbCr_Convert_Function;
 
 uint8_t MCU_Data_IntBuffer0[CHUNK_SIZE_IN];
-uint8_t MCU_Data_InBuffer1[CHUNK_SIZE_IN];
 
 uint8_t JPEG_Data_OutBuffer0[CHUNK_SIZE_OUT];
-uint8_t JPEG_Data_OutBuffer1[CHUNK_SIZE_OUT];
 
 JPEG_Data_BufferTypeDef Jpeg_OUT_BufferTab = {JPEG_BUFFER_EMPTY , JPEG_Data_OutBuffer0 , 0};
 
@@ -85,12 +83,12 @@ uint32_t RGB_InputImageAddress;
 /* Private functions ---------------------------------------------------------*/
 
 /**
-  * @brief  Encode_DMA
-  * @param hjpeg: JPEG handle pointer
-  * @param  FileName    : jpg file path for decode.
-  * @param  DestAddress : ARGB destination Frame Buffer Address.
-  * @retval None
-  */
+ * @brief  Encode_DMA
+ * @param hjpeg: JPEG handle pointer
+ * @param  FileName    : jpg file path for decode.
+ * @param  DestAddress : ARGB destination Frame Buffer Address.
+ * @retval None
+ */
 //uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint32_t RGBImageBufferAddress, uint32_t RGBImageSize_Bytes, FIL *jpgfile)
 uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint32_t RGBImageBufferAddress, uint32_t RGBImageSize_Bytes)
 {
@@ -260,7 +258,7 @@ void HAL_JPEG_EncodeCpltCallback(JPEG_HandleTypeDef *hjpeg)
 }
 
 /**
-  * @}
-  */
+ * @}
+ */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
