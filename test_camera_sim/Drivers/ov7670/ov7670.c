@@ -23,8 +23,6 @@ static I2C_HandleTypeDef  *sp_hi2c;
 static uint32_t    s_destAddressForContiuousMode;
 static void (* s_cbHsync)(uint32_t h);
 static void (* s_cbVsync)(uint32_t v);
-static uint32_t s_currentH;
-static uint32_t s_currentV;
 
 /*** Internal Function Declarations ***/
 static HAL_StatusTypeDef SCCB_Write(uint8_t regAddr, uint8_t data);
@@ -97,69 +95,6 @@ static struct regval_list ov7670_default_regs2[] = {//from the linux driver
 	//{ CLKRC, 0x1 },	/* OV: clock scale (30 fps) */
 
 	{0xff, 0xff},	/* END MARKER */
-};
-
-static struct regval_list ov7670_default_regs3[] = {
-
-  /* color matrix coefficient */
-#if 0
-  {0x4f, 0xb3},
-  {0x50, 0xb3},
-  {0x51, 0x00},
-  {0x52, 0x3d},
-  {0x53, 0xa7},
-  {0x54, 0xe4},
-  {0x58, 0x9e},
-#else
-  {0x4f, 0x80},
-  {0x50, 0x80},
-  {0x51, 0x00},
-  {0x52, 0x22},
-  {0x53, 0x5e},
-  {0x54, 0x80},
-  {0x58, 0x9e},
-#endif
-
-  /* gamma curve */
-#if 1
-  {0x7b, 16},
-  {0x7c, 30},
-  {0x7d, 53},
-  {0x7e, 90},
-  {0x7f, 105},
-  {0x80, 118},
-  {0x81, 130},
-  {0x82, 140},
-  {0x83, 150},
-  {0x84, 160},
-  {0x85, 180},
-  {0x86, 195},
-  {0x87, 215},
-  {0x88, 230},
-  {0x89, 244},
-  {0x7a, 16},
-#else
-  /* gamma = 1 */
-  {0x7b, 4},
-  {0x7c, 8},
-  {0x7d, 16},
-  {0x7e, 32},
-  {0x7f, 40},
-  {0x80, 48},
-  {0x81, 56},
-  {0x82, 64},
-  {0x83, 72},
-  {0x84, 80},
-  {0x85, 96},
-  {0x86, 112},
-  {0x87, 144},
-  {0x88, 176},
-  {0x89, 208},
-  {0x7a, 64},
-#endif
-
-  {0xFF, 0xFF},
-	
 };
 
 

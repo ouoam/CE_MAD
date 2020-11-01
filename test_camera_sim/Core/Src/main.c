@@ -23,6 +23,7 @@
 #include "dma.h"
 #include "i2c.h"
 #include "i2s.h"
+#include "jpeg.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -160,12 +161,15 @@ int main(void)
   MX_I2C2_Init();
   MX_USART3_UART_Init();
   MX_I2S3_Init();
+  MX_JPEG_Init();
   /* USER CODE BEGIN 2 */
 	ov7670_init(&hdcmi, &hi2c2);
 	
 	HAL_Delay(100);
 	
-	HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, BUFF_LINE * RES_QQVGA_W * 2 / 4);
+	HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
+
+	//HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, BUFF_LINE * RES_QQVGA_W * 2 / 4);
 	
   /* USER CODE END 2 */
 
@@ -173,6 +177,29 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    for (int i = 0; i < RES_QQVGA_H; i++) {
+      for (int j = 0; j < RES_QQVGA_W / 2; j++) {
+    	  /*
+		  switch (j / (RES_QQVGA_W / 2 /5)) {
+		  case 0: buffCAM[i % BUFF_LINE][j] = 0x007F007F; break;
+		  case 1: buffCAM[i % BUFF_LINE][j] = 0x7F7F007F; break;
+		  case 2: buffCAM[i % BUFF_LINE][j] = 0xFF7F007F; break;
+		  case 3: buffCAM[i % BUFF_LINE][j] = 0x007F7F7F; break;
+		  case 4: buffCAM[i % BUFF_LINE][j] = 0x007FFF7F; break;
+		  }
+		  */
+
+
+      buffCAM[i % BUFF_LINE][j] = 0x007F007F |
+                                  (uint8_t)(i * 255 / (RES_QQVGA_H-1)) << 24 |
+                                  (uint8_t)(j * 255 / (RES_QQVGA_W/2-1)) << 8;
+
+      }
+      HAL_DCMI_LineEventCallback(&hdcmi);
+      HAL_Delay(1000/RES_QQVGA_H/2);
+    }
+    HAL_DCMI_FrameEventCallback(&hdcmi);
+    //HAL_Delay(5000);
 		// printf("1234567890\r\n");
 		// HAL_UART_Transmit(&huart3, (unsigned char *)"1234567890\r\n", 12, 500);
 		// HAL_Delay(1);

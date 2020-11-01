@@ -1,0 +1,6 @@
+printf
+init
+param
+retval
+int
+&hdcmi

@@ -58,6 +58,9 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_dcmi;
 extern DCMI_HandleTypeDef hdcmi;
+extern DMA_HandleTypeDef hdma_jpeg_in;
+extern DMA_HandleTypeDef hdma_jpeg_out;
+extern JPEG_HandleTypeDef hjpeg;
 extern DMA_HandleTypeDef hdma_usart3_tx;
 extern UART_HandleTypeDef huart3;
 /* USER CODE BEGIN EV */
@@ -229,17 +232,45 @@ void USART3_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles DMA2 stream7 global interrupt.
+  * @brief This function handles DMA2 stream1 global interrupt.
   */
-void DMA2_Stream7_IRQHandler(void)
+void DMA2_Stream1_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA2_Stream7_IRQn 0 */
+  /* USER CODE BEGIN DMA2_Stream1_IRQn 0 */
 
-  /* USER CODE END DMA2_Stream7_IRQn 0 */
+  /* USER CODE END DMA2_Stream1_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_dcmi);
-  /* USER CODE BEGIN DMA2_Stream7_IRQn 1 */
+  /* USER CODE BEGIN DMA2_Stream1_IRQn 1 */
 
-  /* USER CODE END DMA2_Stream7_IRQn 1 */
+  /* USER CODE END DMA2_Stream1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA2 stream3 global interrupt.
+  */
+void DMA2_Stream3_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream3_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream3_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_jpeg_in);
+  /* USER CODE BEGIN DMA2_Stream3_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA2 stream4 global interrupt.
+  */
+void DMA2_Stream4_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream4_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream4_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_jpeg_out);
+  /* USER CODE BEGIN DMA2_Stream4_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream4_IRQn 1 */
 }
 
 /**
@@ -254,6 +285,20 @@ void DCMI_IRQHandler(void)
   /* USER CODE BEGIN DCMI_IRQn 1 */
 
   /* USER CODE END DCMI_IRQn 1 */
+}
+
+/**
+  * @brief This function handles JPEG global interrupt.
+  */
+void JPEG_IRQHandler(void)
+{
+  /* USER CODE BEGIN JPEG_IRQn 0 */
+
+  /* USER CODE END JPEG_IRQn 0 */
+  HAL_JPEG_IRQHandler(&hjpeg);
+  /* USER CODE BEGIN JPEG_IRQn 1 */
+
+  /* USER CODE END JPEG_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
