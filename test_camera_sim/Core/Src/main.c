@@ -91,7 +91,7 @@ void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
   //printf("FRAME %d\n", HAL_GetTick());
 	//printf("%d %d %f\r\n", aa, bb, 1000.0 / (now  - last));
 	// printf("*RDY*");
-	HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
+	// HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
 	aa = 0;
 	bb = 0;
 	last = now;
@@ -112,14 +112,15 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
 	//printf("HSYNC %d\n", HAL_GetTick());
 	//HAL_UART_Transmit(&huart3, (uint8_t*)buffCAM[aa%MAX_INPUT_LINES], FRAME_SIZE_WIDTH * 2, 1000);
+  /*
 	while (huart3.gState != HAL_UART_STATE_READY);
 	if(HAL_UART_Transmit_DMA(&huart3, buffCAM[aa%MAX_INPUT_LINES], FRAME_SIZE_WIDTH * 2)!= HAL_OK)
 	{
 		NVIC_SystemReset();
-		/* Transfer error in transmission process */
+		// Transfer error in transmission process
 		Error_Handler();
 	}
-
+  */
   uint8_t buffLine = aa%MAX_INPUT_LINES;
 
   for (int j = 0; j < FRAME_SIZE_WIDTH * 2; j+=4) {
@@ -127,15 +128,14 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
     uint32_t MCUindexBlock = (j/(8*2)) % 2;
     MCU_Data_IntBuffer1[MCUindex][MCUindexBlock][buffLine][(j/2) % 8]   = buffCAM[buffLine][j + 0];
     MCU_Data_IntBuffer1[MCUindex][MCUindexBlock][buffLine][(j/2+1) % 8] = buffCAM[buffLine][j + 2];
-
     MCU_Data_IntBuffer1[MCUindex][2][buffLine][(j/4) % 8] = buffCAM[buffLine][j + 1];
     MCU_Data_IntBuffer1[MCUindex][3][buffLine][(j/4) % 8] = buffCAM[buffLine][j + 3];
   }
 
   if (aa == 7) {
-    // JPEG_Encode_DMA(&hjpeg, )
+    JPEG_Encode_DMA(&hjpeg, &MCU_Data_IntBuffer1[0][0][0][0]);
   } else if (aa % 8 == 7) {
-
+    JPEG_EncodeInputHandler(&hjpeg);
   }
 
 	aa++;
