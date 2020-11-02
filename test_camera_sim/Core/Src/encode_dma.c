@@ -148,7 +148,7 @@ uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint8_t *RGBImageBufferAddre
   * @param hjpeg: JPEG handle pointer
   * @retval 1 : if JPEG processing has finiched, 0 : if JPEG processing still ongoing
   */
-uint32_t JPEG_EncodeOutputHandler(JPEG_HandleTypeDef *hjpeg)
+uint8_t JPEG_EncodeOutputHandler(JPEG_HandleTypeDef *hjpeg)
 {
   if(Jpeg_OUT_BufferTab.State == JPEG_BUFFER_FULL)
   {
@@ -177,9 +177,11 @@ uint32_t JPEG_EncodeOutputHandler(JPEG_HandleTypeDef *hjpeg)
   * @param hjpeg: JPEG handle pointer
   * @retval None
   */
-void JPEG_EncodeInputHandler(JPEG_HandleTypeDef *hjpeg)
+uint8_t JPEG_EncodeInputHandler(JPEG_HandleTypeDef *hjpeg)
 {
   uint32_t DataBufferSize = Conf.ImageWidth * MAX_INPUT_LINES * BYTES_PER_PIXEL;
+
+  while(Jpeg_IN_BufferTab.State != JPEG_BUFFER_EMPTY);
 
   if((Jpeg_IN_BufferTab.State == JPEG_BUFFER_EMPTY) && (MCU_BlockIndex <= MCU_TotalNb))
   {
@@ -208,6 +210,9 @@ void JPEG_EncodeInputHandler(JPEG_HandleTypeDef *hjpeg)
     {
       MCU_BlockIndex++;
     }
+    return 1;
+  } else {
+    return 0;
   }
 }
 

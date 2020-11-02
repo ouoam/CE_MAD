@@ -48,9 +48,6 @@ class Camera:
 
     def getImg(self):
         # self.serial.write([ord('A')])
-
-        while not self.isImageStart():
-            pass
         # print("start")
         i = 0
         frame_raw = bytearray()
@@ -59,6 +56,29 @@ class Camera:
             frame_raw += raw
             i += 400
         #frame_raw = self.serial.read(self.height * self.width * 2)
+
+        index = 0
+        raw = bytearray()
+
+        while True:
+            hi = msvcrt.getch()
+            if index < len(COMMAND):
+                if COMMAND[index] == hi:
+                    if index == len(COMMAND) - 1:
+                        raw = raw[:-4]
+                        print("match", raw)
+                        index = 0
+                    else:
+                        index = index + 1
+                else:
+                    index = 0
+
+            print(hi, index)
+
+            raw += hi
+
+            if hi == b'\x03':
+                sys.exit()
 
         Y1 = frame_raw[0::4]
         U  = frame_raw[1::4]
@@ -90,11 +110,14 @@ class Camera:
         if img is not None:
             cv2.imwrite(saveat, img)
 
-cam = Camera('COM3')
+cam = Camera()
 cam.connect()
 time.sleep(2)
 
 last = time.time()
+
+while not cam.isImageStart():
+    pass
 
 while True:
     try:

@@ -91,7 +91,7 @@ void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
   //printf("FRAME %d\n", HAL_GetTick());
 	//printf("%d %d %f\r\n", aa, bb, 1000.0 / (now  - last));
 	// printf("*RDY*");
-	// HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
+	//HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
 	aa = 0;
 	bb = 0;
 	last = now;
@@ -112,7 +112,7 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
 	//printf("HSYNC %d\n", HAL_GetTick());
 	//HAL_UART_Transmit(&huart3, (uint8_t*)buffCAM[aa%MAX_INPUT_LINES], FRAME_SIZE_WIDTH * 2, 1000);
-  /*
+/*
 	while (huart3.gState != HAL_UART_STATE_READY);
 	if(HAL_UART_Transmit_DMA(&huart3, buffCAM[aa%MAX_INPUT_LINES], FRAME_SIZE_WIDTH * 2)!= HAL_OK)
 	{
@@ -120,7 +120,8 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
 		// Transfer error in transmission process
 		Error_Handler();
 	}
-  */
+*/
+
   uint8_t buffLine = aa%MAX_INPUT_LINES;
 
   for (int j = 0; j < FRAME_SIZE_WIDTH * 2; j+=4) {
@@ -135,7 +136,7 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
   if (aa == 7) {
     JPEG_Encode_DMA(&hjpeg, &MCU_Data_IntBuffer1[0][0][0][0]);
   } else if (aa % 8 == 7) {
-    JPEG_EncodeInputHandler(&hjpeg);
+    while (!JPEG_EncodeInputHandler(&hjpeg));
   }
 
 	aa++;
@@ -185,6 +186,8 @@ int main(void)
   MX_JPEG_Init();
   /* USER CODE BEGIN 2 */
 	//ov7670_init(&hdcmi, &hi2c2);
+
+  HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
 	
 	HAL_Delay(100);
 
@@ -216,7 +219,7 @@ int main(void)
       */
 
       buffCAM[i % MAX_INPUT_LINES][j + 0] = round;
-        buffCAM[i % MAX_INPUT_LINES][j + 1] = j * 255 / (FRAME_SIZE_WIDTH * 2-1);
+      buffCAM[i % MAX_INPUT_LINES][j + 1] = j * 255 / (FRAME_SIZE_WIDTH * 2-1);
       buffCAM[i % MAX_INPUT_LINES][j + 2] = round;
       buffCAM[i % MAX_INPUT_LINES][j + 3] = i * 255 / (FRAME_SIZE_HEIGHT-1);
 
