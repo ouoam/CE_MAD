@@ -19,8 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "adc.h"
-#include "dma.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -38,8 +37,8 @@
 /* USER CODE BEGIN PD */
 
 /* --------------------- Change question to compile here ---------------------*/
-/* ---------------------- Available question 1, 3, 4 and 5 ----------------------*/
-#define QUESTION 5
+/* ----------------------- Available question 1, and 2 -----------------------*/
+#define QUESTION 2
 
 /* USER CODE END PD */
 
@@ -51,34 +50,23 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint32_t count;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void displayHEX(uint32_t num) {
-	char tmp[15];
-	sprintf(tmp, "0x%08X", num);
-	HAL_UART_Transmit(&huart3, (unsigned char*) tmp, 10, 100);
-}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+#if QUESTION == 1
+void displayNumber(uint32_t num) {
+	char temp[20];
+	int len = sprintf(temp, "%u\r\n", num);
+	HAL_UART_Transmit(&huart3, (unsigned char *)temp, len, 100);
 }
-
-void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
-{
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-}
-
-#if QUESTION == 5
-  volatile uint32_t adc_val[8000];
 #endif
 /* USER CODE END 0 */
 
@@ -110,61 +98,23 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_ADC1_Init();
+  MX_TIM1_Init();
+  MX_TIM2_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-HAL_UART_Transmit(&huart3, (unsigned char*)"START\r\n\r\n", 9, 100);
+	HAL_TIM_Base_Start_IT(&htim1);
+#if QUESTION == 2
+	HAL_TIM_Base_Start_IT(&htim2);
+#endif
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-#if QUESTION == 1 || QUESTION == 3 || QUESTION == 4
-  volatile uint32_t adc_val = 0;
-  HAL_ADC_Start(&hadc1);
-#elif QUESTION == 5
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_val, 8000);
-#endif
   while (1)
   {
 #if QUESTION == 1
-	  uint32_t hex1 = 501;
-	  displayHEX(hex1);
-	  HAL_Delay(500);
-#elif QUESTION == 3 || QUESTION == 4
-	  while (HAL_ADC_PollForConversion(&hadc1, 100) != HAL_OK);
-	  adc_val = HAL_ADC_GetValue(&hadc1);
-
-	  HAL_UART_Transmit(&huart3, (unsigned char*)"ADC1_CH10 ", 10, 100);
-	  displayHEX(adc_val);
-	  HAL_UART_Transmit(&huart3, (unsigned char*)" Vin = ", 7, 100);
-	  char tmp[10];
-	  int a = sprintf(tmp, "%.2f", adc_val * 3.33 / 0x1000);
-	  HAL_UART_Transmit(&huart3, (unsigned char*)tmp, a, 100);
-	  HAL_UART_Transmit(&huart3, (unsigned char*)"V\r\n", 3, 100);
-
-	#if QUESTION == 4
-	  switch(adc_val / ( 0x1000 / 5)) {
-	  case 0: HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11, GPIO_PIN_SET); break;
-	  case 1: HAL_GPIO_WritePin(GPIOC, 				GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11, GPIO_PIN_SET);
-	  	  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8										  , GPIO_PIN_RESET);break;
-	  case 2: HAL_GPIO_WritePin(GPIOC, 							 GPIO_PIN_10 | GPIO_PIN_11, GPIO_PIN_SET);
-	  	  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9							  , GPIO_PIN_RESET);break;
-	  case 3: HAL_GPIO_WritePin(GPIOC, 										   GPIO_PIN_11, GPIO_PIN_SET);
-	  	  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10			  , GPIO_PIN_RESET);break;
-	  case 4:
-	  case 5: HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11, GPIO_PIN_RESET); break;
-	  }
-	#endif
-	  HAL_Delay(400);
-#elif QUESTION == 5
-		for (int i = 0; i < 8; i++) {
-			char tmp[15];
-			int len = sprintf(tmp, "0x%03X  ", adc_val[i]);
-			HAL_UART_Transmit(&huart3, (unsigned char*) tmp, len, 100);
-		}
-		HAL_Delay(300);
-		HAL_UART_Transmit(&huart3, (unsigned char*)"\r\n", 2, 100);
+		displayNumber(count);
+		HAL_Delay(400);
 #endif
     /* USER CODE END WHILE */
 
@@ -190,12 +140,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 216;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;

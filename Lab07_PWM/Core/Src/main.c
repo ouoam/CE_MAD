@@ -19,14 +19,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "adc.h"
-#include "dma.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,11 +35,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
-/* --------------------- Change question to compile here ---------------------*/
-/* ---------------------- Available question 1, 3, 4 and 5 ----------------------*/
-#define QUESTION 5
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -51,35 +45,18 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t pwm;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void displayHEX(uint32_t num) {
-	char tmp[15];
-	sprintf(tmp, "0x%08X", num);
-	HAL_UART_Transmit(&huart3, (unsigned char*) tmp, 10, 100);
-}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-}
-
-void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
-{
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-}
-
-#if QUESTION == 5
-  volatile uint32_t adc_val[8000];
-#endif
 /* USER CODE END 0 */
 
 /**
@@ -110,62 +87,60 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_ADC1_Init();
+  MX_TIM2_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-HAL_UART_Transmit(&huart3, (unsigned char*)"START\r\n\r\n", 9, 100);
+	float dutyCycle = 2.0;
+	
+	uint8_t PWM[3] = {0 , 0, 0};
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-#if QUESTION == 1 || QUESTION == 3 || QUESTION == 4
-  volatile uint32_t adc_val = 0;
-  HAL_ADC_Start(&hadc1);
-#elif QUESTION == 5
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_val, 8000);
-#endif
   while (1)
   {
-#if QUESTION == 1
-	  uint32_t hex1 = 501;
-	  displayHEX(hex1);
-	  HAL_Delay(500);
-#elif QUESTION == 3 || QUESTION == 4
-	  while (HAL_ADC_PollForConversion(&hadc1, 100) != HAL_OK);
-	  adc_val = HAL_ADC_GetValue(&hadc1);
-
-	  HAL_UART_Transmit(&huart3, (unsigned char*)"ADC1_CH10 ", 10, 100);
-	  displayHEX(adc_val);
-	  HAL_UART_Transmit(&huart3, (unsigned char*)" Vin = ", 7, 100);
-	  char tmp[10];
-	  int a = sprintf(tmp, "%.2f", adc_val * 3.33 / 0x1000);
-	  HAL_UART_Transmit(&huart3, (unsigned char*)tmp, a, 100);
-	  HAL_UART_Transmit(&huart3, (unsigned char*)"V\r\n", 3, 100);
-
-	#if QUESTION == 4
-	  switch(adc_val / ( 0x1000 / 5)) {
-	  case 0: HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11, GPIO_PIN_SET); break;
-	  case 1: HAL_GPIO_WritePin(GPIOC, 				GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11, GPIO_PIN_SET);
-	  	  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8										  , GPIO_PIN_RESET);break;
-	  case 2: HAL_GPIO_WritePin(GPIOC, 							 GPIO_PIN_10 | GPIO_PIN_11, GPIO_PIN_SET);
-	  	  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9							  , GPIO_PIN_RESET);break;
-	  case 3: HAL_GPIO_WritePin(GPIOC, 										   GPIO_PIN_11, GPIO_PIN_SET);
-	  	  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10			  , GPIO_PIN_RESET);break;
-	  case 4:
-	  case 5: HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11, GPIO_PIN_RESET); break;
-	  }
-	#endif
-	  HAL_Delay(400);
-#elif QUESTION == 5
-		for (int i = 0; i < 8; i++) {
-			char tmp[15];
-			int len = sprintf(tmp, "0x%03X  ", adc_val[i]);
-			HAL_UART_Transmit(&huart3, (unsigned char*) tmp, len, 100);
+		#if 0
+		HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+		HAL_Delay(100);
+		HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_3);
+		pwm = (GPIOB->IDR & GPIO_PIN_10) >>10;
+		#endif
+		#if 0
+		htim2.Instance -> CCR3 = (10000-1) * dutyCycle;
+		HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+		HAL_Delay(100);
+		HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_3);
+		pwm = (GPIOB->IDR & GPIO_PIN_10) >>10;
+		#endif
+		uint8_t buff[2];
+		if (HAL_UART_Receive(&huart3, buff, 1, 1000) != HAL_TIMEOUT) {
+			switch(buff[0]) {
+				case 'r': {
+					PWM[0]++;
+					if (PWM[0] == 6) PWM[0] = 0;
+					HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_1);
+					htim2.Instance -> CCR1 = (10000-1) * PWM[0] * 0.2;
+					HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+				}
+				break;
+				case 'g': {
+					PWM[1]++;
+					if (PWM[1] == 6) PWM[1] = 0;
+					HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_3);
+					htim2.Instance -> CCR3 = (10000-1) * PWM[1] * 0.2;
+					HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+				}
+				break;
+				case 'b': {
+					PWM[2]++;
+					if (PWM[2] == 6) PWM[2] = 0;
+					HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_4);
+					htim2.Instance -> CCR4 = (10000-1) * PWM[2] * 0.2;
+					HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
+				}
+				break;
+			}
 		}
-		HAL_Delay(300);
-		HAL_UART_Transmit(&huart3, (unsigned char*)"\r\n", 2, 100);
-#endif
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
