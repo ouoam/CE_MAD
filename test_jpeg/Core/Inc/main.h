@@ -45,9 +45,9 @@ extern "C" {
 /* USER CODE BEGIN EC */
 #define JPEG_CHROMA_SAMPLING     JPEG_422_SUBSAMPLING   /* Select Chroma Sampling: JPEG_420_SUBSAMPLING, JPEG_422_SUBSAMPLING, JPEG_444_SUBSAMPLING   */
 #define JPEG_COLOR_SPACE         JPEG_YCBCR_COLORSPACE  /* Select Color Space: JPEG_YCBCR_COLORSPACE, JPEG_GRAYSCALE_COLORSPACE, JPEG_CMYK_COLORSPACE */
-#define JPEG_IMAGE_QUALITY       100                     /* Set Image Quality for Jpeg Encoding */
+#define JPEG_IMAGE_QUALITY       90                     /* Set Image Quality for Jpeg Encoding */
 #define MAX_INPUT_WIDTH          800                    /* Set the Maximum of RGB input images Width to be encoded */
-#define MAX_INPUT_LINES          16                     /* Set Input buffer lines to 16 for YCbCr420, and 8 for YCbCr422 and YCbCr444 (to save RAM space) */
+#define MAX_INPUT_LINES          8                      /* Set Input buffer lines to 16 for YCbCr420, and 8 for YCbCr422 and YCbCr444 (to save RAM space) */
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

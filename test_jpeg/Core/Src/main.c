@@ -111,23 +111,25 @@ int main(void)
   MX_JPEG_Init();
   /* USER CODE BEGIN 2 */
 
-  /*##-4- JPEG Encoding with DMA (Not Blocking ) Method ################*/
-  JPEG_Encode_DMA(&hjpeg, RGB_ImageAddress, RGB_IMAGE_SIZE, &huart3);
-
-  /*##-5- Wait till end of JPEG encoding and perfom Input/Output Processing in BackGround  #*/
-  do
-  {
-    JPEG_EncodeInputHandler(&hjpeg);
-    JpegEncodeProcessing_End = JPEG_EncodeOutputHandler(&hjpeg);
-
-  }while(JpegEncodeProcessing_End == 0);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /*##-4- JPEG Encoding with DMA (Not Blocking ) Method ################*/
+    JPEG_Encode_DMA(&hjpeg, RGB_ImageAddress, RGB_IMAGE_SIZE, &huart3);
+
+    /*##-5- Wait till end of JPEG encoding and perfom Input/Output Processing in BackGround  #*/
+    do
+    {
+      JPEG_EncodeInputHandler(&hjpeg);
+      JpegEncodeProcessing_End = JPEG_EncodeOutputHandler(&hjpeg);
+
+    }while(JpegEncodeProcessing_End == 0);
+
+    HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
+    HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -15,7 +15,7 @@ class Camera:
 
         self.serial = serial.Serial()
         self.serial.port = port
-        self.serial.baudrate = 2250000
+        self.serial.baudrate = 921600
         self.serial.bytesize = serial.EIGHTBITS
         self.serial.stopbits = serial.STOPBITS_ONE
         self.serial.parity = serial.PARITY_NONE
@@ -23,10 +23,6 @@ class Camera:
 
     def connect(self):
         self.serial.open()
-#        while not self.isImageStart():
-#            pass
-#        print("finish init camera")
-#        cv2.startWindowThread()
 
     def read(self):
         raw = self.serial.read()
@@ -47,68 +43,38 @@ class Camera:
         return True
 
     def getImg(self):
-        # self.serial.write([ord('A')])
-        # print("start")
-        i = 0
-        frame_raw = bytearray()
-        while i < self.height * self.width * 2:
-            raw = self.serial.read(400)
-            frame_raw += raw
-            i += 400
-        #frame_raw = self.serial.read(self.height * self.width * 2)
-
         index = 0
         raw = bytearray()
 
+        COMMAND = [b'*', b'R', b'D', b'Y', b'*']
+
         while True:
-            hi = msvcrt.getch()
+            hi = self.serial.read()
             if index < len(COMMAND):
                 if COMMAND[index] == hi:
                     if index == len(COMMAND) - 1:
                         raw = raw[:-4]
-                        print("match", raw)
                         index = 0
+                        break
                     else:
                         index = index + 1
                 else:
                     index = 0
 
-            print(hi, index)
-
             raw += hi
 
-            if hi == b'\x03':
-                sys.exit()
+        # f = open("pic_" + str(time.time()) + ".jpeg", "x+b")
+        # f.write(raw)
+        # f.close()
 
-        Y1 = frame_raw[0::4]
-        U  = frame_raw[1::4]
-        Y2 = frame_raw[2::4]
-        V  = frame_raw[3::4]
-        
-        UV = np.empty((self.height*self.width), dtype=np.uint8)
-        YY = np.empty((self.height*self.width), dtype=np.uint8)
-        
-        UV[0::2] = np.frombuffer(U,  dtype=np.uint8)
-        UV[1::2] = np.frombuffer(V,  dtype=np.uint8)
-        YY[0::2] = np.frombuffer(Y1, dtype=np.uint8)
-        YY[1::2] = np.frombuffer(Y2, dtype=np.uint8)
-        
-        UV = UV.reshape((self.height, self.width))
-        YY = YY.reshape((self.height, self.width))
-        
-        frame_uyvy = cv2.merge([UV, YY])
-
-        return frame_uyvy, False
+        return raw, False
 
     def display(self, img):
         if img is not None:
-            frame_bgr  = cv2.cvtColor(img, cv2.COLOR_YUV2BGR_UYVY)
+            nparr = np.frombuffer(img, np.uint8)
+            frame_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             cv2.imshow("", frame_bgr)
             cv2.waitKey(1)
-
-    def save(self, img, saveat):
-        if img is not None:
-            cv2.imwrite(saveat, img)
 
 cam = Camera()
 cam.connect()
@@ -116,8 +82,9 @@ time.sleep(2)
 
 last = time.time()
 
-while not cam.isImageStart():
-    pass
+# while not cam.isImageStart():
+#     pass
+
 
 while True:
     try:
