@@ -76,6 +76,7 @@ __IO uint32_t Input_Is_Paused       = 0;
 
 JPEG_ConfTypeDef Conf;
 UART_HandleTypeDef *pHuart;
+JPEG_HandleTypeDef *pJpeg;
 
 uint32_t RGB_InputImageIndex;
 uint32_t RGB_InputImageSize_Bytes;
@@ -94,6 +95,7 @@ uint32_t RGB_InputImageAddress;
 uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint32_t RGBImageBufferAddress, uint32_t RGBImageSize_Bytes, UART_HandleTypeDef *huart)
 {
   pHuart = huart;
+  pJpeg = hjpeg;
   uint32_t DataBufferSize = 0;
 
   /* Reset all Global variables */
@@ -142,27 +144,11 @@ uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint32_t RGBImageBufferAddre
   */
 uint32_t JPEG_EncodeOutputHandler(JPEG_HandleTypeDef *hjpeg)
 {
-  //uint32_t bytesWritefile = 0;
-
-  if(Jpeg_OUT_BufferTab.State == JPEG_BUFFER_FULL)
+  if(Jpeg_HWEncodingEnd != 0)
   {
-    //f_write (pJpegFile, Jpeg_OUT_BufferTab.DataBuffer ,Jpeg_OUT_BufferTab.DataBufferSize, (UINT*)(&bytesWritefile)) ;
-    HAL_UART_Transmit(pHuart, Jpeg_OUT_BufferTab.DataBuffer, Jpeg_OUT_BufferTab.DataBufferSize, 1000);
-
-    Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
-    Jpeg_OUT_BufferTab.DataBufferSize = 0;
-
-    if(Jpeg_HWEncodingEnd != 0)
-    {
-      return 1;
-    }
-    else if((Output_Is_Paused == 1) && (Jpeg_OUT_BufferTab.State == JPEG_BUFFER_EMPTY))
-    {
-      Output_Is_Paused = 0;
-      HAL_JPEG_Resume(hjpeg, JPEG_PAUSE_RESUME_OUTPUT);
-    }
+    while (pHuart->gState != HAL_UART_STATE_READY);
+    return 1;
   }
-
 
   return 0;
 }
@@ -239,6 +225,33 @@ void HAL_JPEG_DataReadyCallback (JPEG_HandleTypeDef *hjpeg, uint8_t *pDataOut, u
   Output_Is_Paused = 1;
 
   HAL_JPEG_ConfigOutputBuffer(hjpeg, Jpeg_OUT_BufferTab.DataBuffer, CHUNK_SIZE_OUT);
+
+  if(HAL_UART_Transmit_DMA(pHuart, Jpeg_OUT_BufferTab.DataBuffer, Jpeg_OUT_BufferTab.DataBufferSize)!= HAL_OK)
+  {
+    NVIC_SystemReset();
+    // Transfer error in transmission process
+    Error_Handler();
+  }
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if(Jpeg_OUT_BufferTab.State == JPEG_BUFFER_FULL)
+  {
+    Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
+    Jpeg_OUT_BufferTab.DataBufferSize = 0;
+
+    if(Output_Is_Paused == 1)
+    {
+      Output_Is_Paused = 0;
+      HAL_JPEG_Resume(pJpeg, JPEG_PAUSE_RESUME_OUTPUT);
+    }
+  }
+
+  if(Jpeg_HWEncodingEnd != 0)
+  {
+    HAL_UART_Transmit(huart, (uint8_t*)"*RDY*", 5, 100);
+  }
 }
 
 /**

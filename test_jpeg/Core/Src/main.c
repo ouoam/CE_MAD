@@ -47,6 +47,8 @@
 
 /* USER CODE BEGIN PV */
 uint32_t RGB_ImageAddress;
+
+uint8_t q = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -128,8 +130,9 @@ int main(void)
 
     }while(JpegEncodeProcessing_End == 0);
 
-    HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
-    HAL_Delay(100);
+    q++;
+    q%=99;
+    //HAL_Delay(10000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -212,7 +215,8 @@ void RGB_GetInfo(JPEG_ConfTypeDef *pInfo)
   /* Jpeg Encoding Setting to be setted by users */
   pInfo->ChromaSubsampling  = JPEG_CHROMA_SAMPLING;
   pInfo->ColorSpace         = JPEG_COLOR_SPACE;
-  pInfo->ImageQuality       = JPEG_IMAGE_QUALITY;
+  //pInfo->ImageQuality       = JPEG_IMAGE_QUALITY;
+  pInfo->ImageQuality       = q+1;
 
   /*Check if Image Sizes meets the requirements */
   if (((pInfo->ImageWidth % 8) != 0 ) || ((pInfo->ImageHeight % 8) != 0 ) || \
