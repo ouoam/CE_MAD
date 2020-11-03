@@ -39,6 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define RGB_IMAGE_SIZE  ((uint32_t)FRAME_SIZE_HEIGHT * FRAME_SIZE_WIDTH * 2)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,7 +48,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -60,23 +60,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-/* PRINTF REDIRECT to UART BEGIN */
-// @see    http://www.keil.com/forum/60531/
-// @see    https://stackoverflow.com/questions/45535126/stm32-printf-redirect
-
-FILE __stdout;
-
-int fputc(int ch, FILE *f){
-	HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 0xFFFF);
-  return ch;
-}
-
-int ferror(FILE *f){
-  /* Your implementation of ferror(). */
-  return 0;
-}
-/* PRINTF REDIRECT to UART END */
 
 uint8_t buffCAM[MAX_INPUT_LINES][FRAME_SIZE_WIDTH * 2];
 
@@ -96,6 +79,8 @@ void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 	bb = 0;
 	last = now;
 	//HAL_UART_Transmit(&huart3, (uint8_t *)buffCAM, FRAME_SIZE_WIDTH * FRAME_SIZE_HEIGHT * 2, 1000);
+
+	JPEG_EncodeOutputHandler(&hjpeg);
 }
 
 void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
@@ -133,10 +118,12 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
     MCU_Data_IntBuffer1[MCUindex][3][buffLine][(j/4) % 8] = buffCAM[buffLine][j + 3];
   }
 
-  if (aa == 7) {
-    JPEG_Encode_DMA(&hjpeg, &MCU_Data_IntBuffer1[0][0][0][0]);
-  } else if (aa % 8 == 7) {
-    while (!JPEG_EncodeInputHandler(&hjpeg));
+  if ((aa & 0x07) == 7) {
+    if (aa == 7) {
+      JPEG_Encode_DMA(&hjpeg, (uint8_t*)MCU_Data_IntBuffer1, RGB_IMAGE_SIZE, &huart3);
+    } else {
+      while (!JPEG_EncodeInputHandler(&hjpeg));
+    }
   }
 
 	aa++;
@@ -225,7 +212,7 @@ int main(void)
 
       }
       HAL_DCMI_LineEventCallback(&hdcmi);
-      HAL_Delay(1000/FRAME_SIZE_HEIGHT/2);
+      //HAL_Delay(1000/FRAME_SIZE_HEIGHT);
     }
     HAL_DCMI_FrameEventCallback(&hdcmi);
     round+=8;

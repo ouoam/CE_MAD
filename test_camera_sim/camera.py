@@ -23,6 +23,9 @@ class Camera:
     def connect(self):
         self.serial.open()
 
+    def disconnect(self):
+        self.serial.close()
+
     def getImg(self):
         raw = bytearray(self.remain)
         rx = 0
@@ -52,19 +55,29 @@ class Camera:
             cv2.waitKey(1)
 
 cam = Camera()
-cam.connect()
-time.sleep(2)
 
 last = time.time()
 
 while True:
     try:
-        img = cam.getImg()
-        now = time.time()
-        print("{:.5f}".format(1 / (now - last)), "fps", len(img))
-        last = now
-        cam.display(img)
-    except KeyboardInterrupt:
-        sys.exit()
-    except Exception as e:
-        print(e)
+        cam.connect()
+    except serial.SerialException as e:
+        print(1, e)
+        time.sleep(2)
+        continue
+
+    while True:
+        try:
+            img = cam.getImg()
+            now = time.time()
+            print("{:.5f}".format(1 / (now - last)), "fps", len(img))
+            last = now
+            cam.display(img)
+        except KeyboardInterrupt:
+            sys.exit()
+        except serial.SerialException as e:
+            cam.disconnect()
+            print(2, e)
+            break
+        except Exception as e:
+            print(e)
