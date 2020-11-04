@@ -58,6 +58,8 @@ cam = Camera()
 
 last = time.time()
 
+lastlist = []
+
 while True:
     try:
         cam.connect()
@@ -70,7 +72,10 @@ while True:
         try:
             img = cam.getImg()
             now = time.time()
-            print("{:.5f}".format(1 / (now - last)), "fps", len(img))
+            lastlist.append(now - last)
+            if len(lastlist) > 100:
+                lastlist = lastlist[-100:]
+            print("{:.5f}".format(1 / (sum(lastlist)/len(lastlist))), "fps", "{:.2f}".format((sum(lastlist)/len(lastlist))*1000), len(img))
             last = now
             cam.display(img)
         except KeyboardInterrupt:
@@ -81,3 +86,4 @@ while True:
             break
         except Exception as e:
             print(e)
+            lastlist = []

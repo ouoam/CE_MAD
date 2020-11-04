@@ -48,6 +48,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -63,70 +64,53 @@ void SystemClock_Config(void);
 
 uint8_t buffCAM[MAX_INPUT_LINES][FRAME_SIZE_WIDTH * 2];
 
-int aa = 0;
-int bb = 0;
-
-uint32_t last;
+uint32_t line = 0;
 
 void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
-	uint32_t now = HAL_GetTick();
-  //printf("FRAME %d\n", HAL_GetTick());
-	//printf("%d %d %f\r\n", aa, bb, 1000.0 / (now  - last));
-	// printf("*RDY*");
-	//HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
-	aa = 0;
-	bb = 0;
-	last = now;
-	//HAL_UART_Transmit(&huart3, (uint8_t *)buffCAM, FRAME_SIZE_WIDTH * FRAME_SIZE_HEIGHT * 2, 1000);
+  line = 0;
 
-	JPEG_EncodeOutputHandler(&hjpeg);
+	while (JPEG_EncodeOutputHandler(&hjpeg) == 0);
 }
 
 void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
-  //printf("VSYNC %d\n", HAL_GetTick());
-	bb++;
 }
 
-#define CHUNK_SIZE_IN1   ((uint32_t)(FRAME_SIZE_WIDTH * 2 * MAX_INPUT_LINES))
-#define MCU_PER_BUFF    ((uint32_t)(FRAME_SIZE_WIDTH * 2 * MAX_INPUT_LINES) / (4 * 8 * 8))
-uint8_t MCU_Data_IntBuffer1[MCU_PER_BUFF][4][8][8];
+#define CHUNK_SIZE_IN1  ((uint32_t)(FRAME_SIZE_WIDTH * 2 * MAX_INPUT_LINES))
+uint8_t MCU_Data_IntBuffer1[CHUNK_SIZE_IN1];
 
 void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
-	//printf("HSYNC %d\n", HAL_GetTick());
-	//HAL_UART_Transmit(&huart3, (uint8_t*)buffCAM[aa%MAX_INPUT_LINES], FRAME_SIZE_WIDTH * 2, 1000);
-/*
-	while (huart3.gState != HAL_UART_STATE_READY);
-	if(HAL_UART_Transmit_DMA(&huart3, buffCAM[aa%MAX_INPUT_LINES], FRAME_SIZE_WIDTH * 2)!= HAL_OK)
-	{
-		NVIC_SystemReset();
-		// Transfer error in transmission process
-		Error_Handler();
-	}
-*/
+  uint32_t lineMod = line&0x07;
+  uint8_t *startT = (uint8_t*)MCU_Data_IntBuffer1 + lineMod*8;
+  uint8_t *startF = (uint8_t*)buffCAM + lineMod*FRAME_SIZE_WIDTH*2;
 
-  uint8_t buffLine = aa%MAX_INPUT_LINES;
+  for (uint32_t i = 0; i < FRAME_SIZE_WIDTH / (8*2); i++) {
+      for (uint32_t j = 0; j < 8*2*2; j+=4) {
+          uint32_t index = j/(8*2)*8*8 + ((j>>1)&0x7);
+          uint32_t index2 = 2*8*8 + (j>>2);
 
-  for (int j = 0; j < FRAME_SIZE_WIDTH * 2; j+=4) {
-    uint32_t MCUindex = j / (8 * 2 * 2);
-    uint32_t MCUindexBlock = (j/(8*2)) % 2;
-    MCU_Data_IntBuffer1[MCUindex][MCUindexBlock][buffLine][(j/2) % 8]   = buffCAM[buffLine][j + 0];
-    MCU_Data_IntBuffer1[MCUindex][MCUindexBlock][buffLine][(j/2+1) % 8] = buffCAM[buffLine][j + 2];
-    MCU_Data_IntBuffer1[MCUindex][2][buffLine][(j/4) % 8] = buffCAM[buffLine][j + 1];
-    MCU_Data_IntBuffer1[MCUindex][3][buffLine][(j/4) % 8] = buffCAM[buffLine][j + 3];
+          startT[index]         = startF[0];
+          startT[index + 1]     = startF[2];
+
+          startT[index2]        = startF[1];
+          startT[index2 + 8*8]  = startF[3];
+
+          startF += 4;
+      }
+      startT += 4*8*8;
   }
 
-  if ((aa & 0x07) == 7) {
-    if (aa == 7) {
+  if (lineMod == 7) {
+    if (line == 7) {
       JPEG_Encode_DMA(&hjpeg, (uint8_t*)MCU_Data_IntBuffer1, RGB_IMAGE_SIZE, &huart3);
     } else {
       while (!JPEG_EncodeInputHandler(&hjpeg));
     }
   }
 
-	aa++;
+  line++;
 }
 
 
@@ -180,46 +164,30 @@ int main(void)
 
 	//HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
 	
-  /* USER CODE END 2 */
 
-	uint8_t round = 0;
+	uint32_t round = 0;
+
+  /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    for (int i = 0; i < FRAME_SIZE_HEIGHT; i++) {
-      for (int j = 0; j < FRAME_SIZE_WIDTH * 2; j+=4) {
-    	  /*
-		  switch (j / (FRAME_SIZE_WIDTH / 2 /5)) {
-		  case 0: buffCAM[i % MAX_INPUT_LINES][j] = 0x007F007F; break;
-		  case 1: buffCAM[i % MAX_INPUT_LINES][j] = 0x7F7F007F; break;
-		  case 2: buffCAM[i % MAX_INPUT_LINES][j] = 0xFF7F007F; break;
-		  case 3: buffCAM[i % MAX_INPUT_LINES][j] = 0x007F7F7F; break;
-		  case 4: buffCAM[i % MAX_INPUT_LINES][j] = 0x007FFF7F; break;
-		  }
-		  */
-/*
-      buffCAM[i % MAX_INPUT_LINES][j] = round << 16 | round |
-                                  (uint8_t)(i * 255 / (FRAME_SIZE_HEIGHT-1)) << 24 |
-                                  (uint8_t)(j * 255 / (FRAME_SIZE_WIDTH/2-1)) << 8;
-      */
-
-      buffCAM[i % MAX_INPUT_LINES][j + 0] = round;
-      buffCAM[i % MAX_INPUT_LINES][j + 1] = j * 255 / (FRAME_SIZE_WIDTH * 2-1);
-      buffCAM[i % MAX_INPUT_LINES][j + 2] = round;
-      buffCAM[i % MAX_INPUT_LINES][j + 3] = i * 255 / (FRAME_SIZE_HEIGHT-1);
-
+    uint32_t *startF = (uint32_t*)buffCAM;
+    for (uint32_t i = 0; i < 0xFF000000; i+=(0xFF000000/FRAME_SIZE_HEIGHT)) {
+      if (i % ((0xFF000000/FRAME_SIZE_HEIGHT) *8) == 0) {
+        startF = (uint32_t*)buffCAM;
+      }
+      for (uint32_t j = 0; j < 0xFF00; j+=(0xFF00/(FRAME_SIZE_WIDTH*2/4))) {
+        *startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
       }
       HAL_DCMI_LineEventCallback(&hdcmi);
       //HAL_Delay(1000/FRAME_SIZE_HEIGHT);
     }
     HAL_DCMI_FrameEventCallback(&hdcmi);
-    round+=8;
+    round+=(4) | (4<<16);
+    round&=0xFF| (0xFF<<16);
     //HAL_Delay(5000);
-		// printf("1234567890\r\n");
-		// HAL_UART_Transmit(&huart3, (unsigned char *)"1234567890\r\n", 12, 500);
-		// HAL_Delay(1);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
