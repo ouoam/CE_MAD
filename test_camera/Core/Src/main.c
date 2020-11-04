@@ -23,6 +23,7 @@
 #include "dma.h"
 #include "i2c.h"
 #include "i2s.h"
+#include "sdmmc.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -160,6 +161,7 @@ int main(void)
   MX_I2C2_Init();
   MX_USART3_UART_Init();
   MX_I2S3_Init();
+  MX_SDMMC2_SD_Init();
   /* USER CODE BEGIN 2 */
 	ov7670_init(&hdcmi, &hi2c2);
 	
@@ -235,7 +237,8 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_PLLI2S|RCC_PERIPHCLK_USART3
-                              |RCC_PERIPHCLK_I2C2|RCC_PERIPHCLK_I2S;
+                              |RCC_PERIPHCLK_I2C2|RCC_PERIPHCLK_SDMMC2
+                              |RCC_PERIPHCLK_I2S|RCC_PERIPHCLK_CLK48;
   PeriphClkInitStruct.PLLI2S.PLLI2SN = 144;
   PeriphClkInitStruct.PLLI2S.PLLI2SP = RCC_PLLP_DIV2;
   PeriphClkInitStruct.PLLI2S.PLLI2SR = 3;
@@ -244,6 +247,8 @@ void SystemClock_Config(void)
   PeriphClkInitStruct.I2sClockSelection = RCC_I2SCLKSOURCE_PLLI2S;
   PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
   PeriphClkInitStruct.I2c2ClockSelection = RCC_I2C2CLKSOURCE_PCLK1;
+  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
+  PeriphClkInitStruct.Sdmmc2ClockSelection = RCC_SDMMC2CLKSOURCE_CLK48;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
