@@ -28,6 +28,8 @@
 
 /* USER CODE BEGIN 0 */
 #include "httpserver-netconn.h"
+#include "rtsp_protocol.h"
+#include "rtp_protocol.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 /* ETH Variables initialization ----------------------------------------------*/
@@ -100,6 +102,7 @@ void MX_LWIP_Init(void)
   dhcp_start(&gnetif);
 
 /* USER CODE BEGIN 3 */
+  RTSP_Init();
   http_server_netconn_init();
 /* USER CODE END 3 */
 }

@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "dcmi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,9 +46,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+extern uint8_t buffCAM[MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2];
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
+osSemaphoreId RTP_SendSemaphoreHandle;
+osSemaphoreId EncJpegLine_SEMHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -90,6 +92,15 @@ void MX_FREERTOS_Init(void) {
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
+  /* Create the semaphores(s) */
+  /* definition and creation of RTP_SendSemaphore */
+  osSemaphoreDef(RTP_SendSemaphore);
+  RTP_SendSemaphoreHandle = osSemaphoreCreate(osSemaphore(RTP_SendSemaphore), 1);
+
+  /* definition and creation of EncJpegLine_SEM */
+  osSemaphoreDef(EncJpegLine_SEM);
+  EncJpegLine_SEMHandle = osSemaphoreCreate(osSemaphore(EncJpegLine_SEM), 1);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
@@ -128,7 +139,7 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(500);
   }
   /* USER CODE END StartDefaultTask */
 }

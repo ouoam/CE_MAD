@@ -52,12 +52,15 @@
 #include "httpserver-netconn.h"
 #include "cmsis_os.h"
 #include "task.h"
+#include "rtsp_protocol.h"
 
 #include <stdio.h>
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define WEBSERVER_THREAD_PRIO    ( osPriorityAboveNormal )
+
+extern RTSP_HandleTypeDef rtsp_struct;
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -322,6 +325,8 @@ void DynWebPage(struct netconn *conn)
   vTaskList((char *)(PAGE_BODY + strlen(PAGE_BODY)));
   strcat((char *)PAGE_BODY, "<br><br>---------------------------------------------");
   strcat((char *)PAGE_BODY, "<br>B : Blocked, R : Ready, D : Deleted, S : Suspended<br>");
+  sprintf(pagehits, "%d", (int)rtsp_struct.State);
+  strcat(PAGE_BODY, pagehits);
 
   /* Send the dynamically generated page */
   netconn_write(conn, PAGE_START, strlen((char*)PAGE_START), NETCONN_COPY);

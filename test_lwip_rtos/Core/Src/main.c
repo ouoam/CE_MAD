@@ -20,6 +20,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "dcmi.h"
+#include "dma.h"
+#include "jpeg.h"
 #include "lwip.h"
 #include "gpio.h"
 
@@ -35,6 +38,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -58,7 +62,14 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int _write(int file, char *ptr, int len)
+{
+  /* Implement your write code here, this is used by puts and printf for example */
+  int i = 0;
+  for(i = 0; i < len; i++)
+    ITM_SendChar(*ptr++);
+  return len;
+}
 /* USER CODE END 0 */
 
 /**
@@ -98,8 +109,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_JPEG_Init();
+  MX_DCMI_Init();
   /* USER CODE BEGIN 2 */
-
+  printf("test\r\n");
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
@@ -172,6 +186,32 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+  * @brief  Get the images sizes from BMP header.
+  * @param  pInfo : pointer to the Info structure
+  * @retval None
+  */
+void RGB_GetInfo(JPEG_ConfTypeDef *pInfo)
+{
+  /* Read Images Sizes */
+  pInfo->ImageWidth         = FRAME_SIZE_WIDTH;
+  pInfo->ImageHeight        = FRAME_SIZE_HEIGHT;
+
+  /* Jpeg Encoding Setting to be set by users */
+  pInfo->ChromaSubsampling  = JPEG_CHROMA_SAMPLING;
+  pInfo->ColorSpace         = JPEG_COLOR_SPACE;
+  pInfo->ImageQuality       = JPEG_IMAGE_QUALITY;
+
+  /*Check if Image Sizes meets the requirements */
+  if (((pInfo->ImageWidth % 8) != 0 ) || ((pInfo->ImageHeight % 8) != 0 ) || \
+      (((pInfo->ImageWidth % 16) != 0 ) && (pInfo->ColorSpace == JPEG_YCBCR_COLORSPACE) && (pInfo->ChromaSubsampling != JPEG_444_SUBSAMPLING)) || \
+      (((pInfo->ImageHeight % 16) != 0 ) && (pInfo->ColorSpace == JPEG_YCBCR_COLORSPACE) && (pInfo->ChromaSubsampling == JPEG_420_SUBSAMPLING)))
+  {
+    Error_Handler();
+  }
+
+}
 
 /* USER CODE END 4 */
 

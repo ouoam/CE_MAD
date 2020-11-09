@@ -29,6 +29,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
+#include "stm32f7xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -54,7 +55,7 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void RGB_GetInfo(JPEG_ConfTypeDef *pInfo);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -108,9 +109,37 @@ void Error_Handler(void);
 #define RMII_TXD0_GPIO_Port GPIOG
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
-#define LD2_Pin GPIO_PIN_7
-#define LD2_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+
+#define RES_VGA_W     640
+#define RES_VGA_H     480
+#define RES_QVGA_W    ( RES_VGA_W / 2 )   // 320
+#define RES_QVGA_H    ( RES_VGA_H / 2 )   // 240
+#define RES_QQVGA_W   ( RES_QVGA_W / 2 )  // 160
+#define RES_QQVGA_H   ( RES_QVGA_H / 2 )  // 120
+
+//#define FRAME_SIZE        (FRAMESIZE_QVGA)
+#define FRAME_SIZE_WIDTH  (RES_VGA_W)
+#define FRAME_SIZE_HEIGHT (RES_VGA_H)
+
+#define JPEG_CHROMA_SAMPLING     JPEG_422_SUBSAMPLING   /* Select Chroma Sampling: JPEG_420_SUBSAMPLING, JPEG_422_SUBSAMPLING, JPEG_444_SUBSAMPLING   */
+#define JPEG_COLOR_SPACE         JPEG_YCBCR_COLORSPACE  /* Select Color Space: JPEG_YCBCR_COLORSPACE, JPEG_GRAYSCALE_COLORSPACE, JPEG_CMYK_COLORSPACE */
+#define JPEG_IMAGE_QUALITY       75                     /* Set Image Quality for Jpeg Encoding */
+#define MAX_INPUT_WIDTH          800                    /* Set the Maximum of RGB input images Width to be encoded */
+#define MAX_INPUT_LINES          8                      /* Set Input buffer lines to 16 for YCbCr420, and 8 for YCbCr422 and YCbCr444 (to save RAM space) */
+
+#define JPEG_BUFFER_SIZE         ((uint32_t) (16 * 1024))
+
+
+/* Genaral configuration for RTSP protocol */
+#define TARGET_IP_ADDRESS    inet_addr("192.168.88.101")      /* Target IP adress */
+#define RTSP_URL             "rtsp://192.168.88.99"          /* RTSP source URL */
+#define RTSP_SERVER_PORT     ";server_port=49152-49153\r\n" /* RTSP server port */
+#define RSTP_PORT            554       /* RTSP network port */
+#define MAX_NB_CLIENT        2         /* Max Number of clients, default value is 2 */
+
+/* Genaral configuration for RTP protocol */
+#define RTP_PORT                    49152
 
 /* USER CODE END Private defines */
 
