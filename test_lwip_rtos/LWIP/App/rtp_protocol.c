@@ -278,7 +278,7 @@ void StartSimDCMItask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    printf("Sim Start\r\n");
+    //printf("Sim Start\r\n");
     uint32_t *startF = (uint32_t*)buffCAM;
     for (uint32_t i = 0; i < 0xFF000000; i+=(0xFF000000/FRAME_SIZE_HEIGHT)) {
       if (i % ((0xFF000000/FRAME_SIZE_HEIGHT) *8) == 0) {
@@ -286,13 +286,14 @@ void StartSimDCMItask(void const * argument)
       }
       for (uint32_t j = 0; j < 0xFF00; j+=(0xFF00/(FRAME_SIZE_WIDTH*2/4))) {
         *startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
+        //*startF++ = 0x007F007F00 | (j & 0xFF00) | (i & 0xFF000000);
       }
       //printf("Sim Line\r\n");
       HAL_DCMI_LineEventCallback(&hdcmi);
       //HAL_Delay(1000/FRAME_SIZE_HEIGHT);
       //osDelay(5);
     }
-    printf("Sim Frame\r\n");
+    //printf("Sim Frame\r\n");
     HAL_DCMI_FrameEventCallback(&hdcmi);
     round+=(4) | (4<<16);
     round&=0xFF| (0xFF<<16);

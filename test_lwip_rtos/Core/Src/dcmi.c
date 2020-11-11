@@ -243,7 +243,7 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
       JPEG_Encode_DMA(&hjpeg, (uint8_t*)MCU_Data_IntBuffer1, RGB_IMAGE_SIZE);
     } else {
       while (!JPEG_EncodeInputHandler(&hjpeg)){
-        osDelay(2);
+        osDelay(1);
       }
     }
   }

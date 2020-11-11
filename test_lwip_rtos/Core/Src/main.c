@@ -23,7 +23,7 @@
 #include "dcmi.h"
 #include "dma.h"
 #include "jpeg.h"
-#include "lwip.h"
+#include "mbedtls.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -66,8 +66,14 @@ int _write(int file, char *ptr, int len)
 {
   /* Implement your write code here, this is used by puts and printf for example */
   int i = 0;
-  for(i = 0; i < len; i++)
-    ITM_SendChar(*ptr++);
+
+  taskENTER_CRITICAL();
+  {
+    for(i = 0; i < len; i++)
+      ITM_SendChar(*ptr++);
+  }
+  taskEXIT_CRITICAL();
+
   return len;
 }
 /* USER CODE END 0 */
@@ -112,6 +118,7 @@ int main(void)
   MX_DMA_Init();
   MX_JPEG_Init();
   MX_DCMI_Init();
+  MX_MBEDTLS_Init();
   /* USER CODE BEGIN 2 */
   printf("test\r\n");
   /* USER CODE END 2 */

@@ -27,9 +27,10 @@
 #include "ethernetif.h"
 
 /* USER CODE BEGIN 0 */
-#include "httpserver-netconn.h"
 #include "rtsp_protocol.h"
 #include "rtp_protocol.h"
+
+#include "lwip/apps/httpd.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 /* ETH Variables initialization ----------------------------------------------*/
@@ -103,7 +104,7 @@ void MX_LWIP_Init(void)
 
 /* USER CODE BEGIN 3 */
   RTSP_Init();
-  http_server_netconn_init();
+  httpd_init();
 /* USER CODE END 3 */
 }
 
