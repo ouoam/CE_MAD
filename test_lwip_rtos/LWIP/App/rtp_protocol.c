@@ -46,6 +46,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "rtp_protocol.h"
+#include "encode_dma.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -56,7 +57,7 @@ osSemaphoreId Sending_Semaphore;      /* Semaphore ID to signal transfer frame c
 osThreadId Thr_Send_Sem;              /* Thread ID */
 osThreadId simDCMItaskHandle;
 volatile osThreadId thr_ID;           /* The thread ID */
-const char jpegRTP_header[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x4B, 0x14, 0x0f};
+const char jpegRTP_header[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x4B, 0x14, 0x0f}; // q, w/8, h/8
 
 void StartSimDCMItask(void const * argument);
 /* Imported variables---------------------------------------------------------*/
@@ -67,8 +68,6 @@ extern uint32_t JPEG_ImgSize;
 extern uint8_t buffCAM[MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2];
 extern DCMI_HandleTypeDef hdcmi;
 /* Private function prototypes -----------------------------------------------*/
-static void rtp_send_packets(int sock_id, struct sockaddr_in* net_dest,
-                                          struct sockaddr_in* local);
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -115,7 +114,7 @@ void RTP_Init(void)
       /*Start the continuous mode of the camera */
       // BSP_CAMERA_ContinuousStart((uint8_t *)RGB_buffer);
       /* definition and creation of simDCMItask */
-      osThreadDef(simDCMItask, StartSimDCMItask, osPriorityAboveNormal, 0, configMINIMAL_STACK_SIZE * 4);
+      osThreadDef(simDCMItask, StartSimDCMItask, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
       simDCMItaskHandle = osThreadCreate(osThread(simDCMItask), NULL);
 
       RTP_struct.rtp_data = (char *)JPEG_buffer;
@@ -133,86 +132,74 @@ void RTP_Init(void)
 }
 
 /**
-  * @brief  send RTP packets 
-  * @param  socket's descriptor  
-  * @param  destination address
-
-  * @retval None
-  */
-static void rtp_send_packets(int sock_id, struct sockaddr_in* net_dest, struct sockaddr_in* local)
-{
-  struct rtp_hdr_t* rtphdr;          /* RTP header */
-  uint8_t offset[3];                 /* The offset in the RTP/JPEG header */
-  uint8_t* rtp_payload;              /* RTP payload */
-  int rtp_payload_size = 0;          /* RTP payload size in the current packet */
-  int rtp_data_index;                /* Index in the stream packet */
-  
-  /* prepare RTP packet */
-  rtphdr = (struct rtp_hdr_t*) RTP_struct.rtp_send_packet;
-  rtphdr->version = RTP_VERSION;
-  rtphdr->pt = 0;
-  rtphdr->ssrc = PP_HTONL(0); 
-
-  /* send RTP stream packets */
-  rtp_data_index = 0;
-  
-  /* While the end of JPEG file is not attained */
-  while (((rtp_data_index + rtp_payload_size)  <= JPEG_ImgSize) || (rtphdr->pt != 0x9A))
-  {
-    /* Increment the timestamp value */
-    rtphdr->ts = htonl(ntohl(rtphdr->ts) + RTP_TIMESTAMP);
-     
-    /* Set a payload pointer */
-    rtp_payload = RTP_struct.rtp_send_packet + sizeof(struct rtp_hdr_t);
-    
-    /* Set a payload size */
-    rtp_payload_size = min(RTP_PAYLOAD_SIZE_MAX, (JPEG_ImgSize - rtp_data_index));  
-    
-    /* set a RTP/JPEG header*/
-    memcpy(rtp_payload, jpegRTP_header ,1 * sizeof(char));
-    offset[0]= (RTP_struct.Offset & 0x00FF0000) >> 16;
-    offset[1]= (RTP_struct.Offset & 0x0000FF00) >> 8;
-    offset[2]= RTP_struct.Offset & 0x000000FF;
-    memcpy(rtp_payload + 1, offset, 3 * sizeof(char));
-    memcpy(rtp_payload + 4, jpegRTP_header + 4, 4 * sizeof(char));
-    
-    /* Set a payload */
-    memcpy(rtp_payload + 8, RTP_struct.rtp_data + rtp_data_index, rtp_payload_size); 
-
-    /* Set MARKER bit in RTP header on the last packet of an image */
-    rtphdr->pt = RTP_PAYLOAD_TYPE| (((rtp_data_index + rtp_payload_size) >= (JPEG_ImgSize - 1)) ? RTP_MARKER_BIT : 0);   
-    
-    /* Send RTP stream packet */
-    if (sendto(sock_id, RTP_struct.rtp_send_packet, sizeof(struct rtp_hdr_t) + rtp_payload_size + 8, 0, (struct sockaddr *)net_dest, sizeof(struct sockaddr)) > 0) 
-    {
-      /* Increment the sequence number */
-      rtphdr->seq = htons(ntohs(rtphdr->seq) + 1);
-
-      /* Increment the index by payload size */
-      rtp_data_index += rtp_payload_size;
-      
-      /* Increment the offset in the RTP/JPEG header by the offset of the current packet */    
-      RTP_struct.Offset += rtp_payload_size;
-    }
-  } 
-}
-
-/**
   * @brief  Sending thread
   * @param  None
   * @retval None
   */
 void Send_Sem(void const * arg)
 {
-  printf("Send_Sem\r\n");
+  struct rtp_hdr_t* rtphdr;          /* RTP header */
+  uint8_t offset[3];                 /* The offset in the RTP/JPEG header */
+  uint8_t* rtp_payload;              /* RTP payload */
+  int rtp_payload_size = 0;          /* RTP payload size in the current packet */
+  
+  int sock_id = RTP_struct.sock_id;
+  struct sockaddr_in* net_dest = &RTP_struct.net_dest;
+
+  /* prepare RTP packet */
+  rtphdr = (struct rtp_hdr_t*) RTP_struct.rtp_send_packet;
+  rtphdr->version = RTP_VERSION;
+  rtphdr->pt = 0;
+  rtphdr->ssrc = PP_HTONL(0); 
+
+  /* Set a payload pointer */
+  rtp_payload = RTP_struct.rtp_send_packet + sizeof(struct rtp_hdr_t);
+
+  /* set a RTP/JPEG header*/
+  memcpy(rtp_payload, jpegRTP_header ,1 * sizeof(char));
+  memcpy(rtp_payload + 4, jpegRTP_header + 4, 4 * sizeof(char));
+
   while(1)
   {
-    /* Try to obtain the semaphore. */
-    if (osSemaphoreWait(RTP_SendSemaphoreHandle, 100) == osOK)
+    // ((rtp_data_index + rtp_payload_size)  <= JPEG_ImgSize) || (rtphdr->pt != 0x9A)
+    uint32_t val = 0;
+    if( xTaskNotifyWait( 0, 0, &val, 1000 ) != 0 )
     {
-      printf("Send JPEG\r\n");
-      /* Send the JPEG image*/
-      rtp_send_packets(RTP_struct.sock_id, &RTP_struct.net_dest, &RTP_struct.local);
+      /* Increment the timestamp value */
+      rtphdr->ts = htonl(ntohl(rtphdr->ts) + RTP_TIMESTAMP);
+
+      /* Set a payload size */
+      rtp_payload_size = min(RTP_PAYLOAD_SIZE_MAX, val);
+
+      /* set a RTP/JPEG header*/
+      offset[0]= (RTP_struct.Offset & 0x00FF0000) >> 16;
+      offset[1]= (RTP_struct.Offset & 0x0000FF00) >> 8;
+      offset[2]= RTP_struct.Offset & 0x000000FF;
+      memcpy(rtp_payload + 1, offset, 3 * sizeof(char));
+
+      /* Set a payload */
+      memcpy(rtp_payload + 8, RTP_struct.rtp_data, rtp_payload_size); // copy jpeg to payload
+
+      JPEG_EncodeOutputResume();
+
+      /* Set MARKER bit in RTP header on the last packet of an image */
+      rtphdr->pt = RTP_PAYLOAD_TYPE| ((RTP_PAYLOAD_SIZE_MAX != val) ? RTP_MARKER_BIT : 0);
+      
+      while (1)
+      /* Send RTP stream packet */
+      if (sendto(sock_id, RTP_struct.rtp_send_packet, sizeof(struct rtp_hdr_t) + rtp_payload_size + 8, 0, (struct sockaddr *)net_dest, sizeof(struct sockaddr)) > 0)
+      {
+        /* Increment the sequence number */
+        rtphdr->seq = htons(ntohs(rtphdr->seq) + 1);
+
+        /* Increment the offset in the RTP/JPEG header by the offset of the current packet */
+        RTP_struct.Offset += rtp_payload_size;
+        break;
+      }
+
+      if (rtphdr->pt == 0x9A) {
+        xTaskNotifyGive(simDCMItaskHandle);
+      }
     }
   }
 }
@@ -291,6 +278,7 @@ void StartSimDCMItask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+    printf("Sim Start\r\n");
     uint32_t *startF = (uint32_t*)buffCAM;
     for (uint32_t i = 0; i < 0xFF000000; i+=(0xFF000000/FRAME_SIZE_HEIGHT)) {
       if (i % ((0xFF000000/FRAME_SIZE_HEIGHT) *8) == 0) {
@@ -308,7 +296,12 @@ void StartSimDCMItask(void const * argument)
     HAL_DCMI_FrameEventCallback(&hdcmi);
     round+=(4) | (4<<16);
     round&=0xFF| (0xFF<<16);
-    osDelay(100);
+    while (1) {
+      if( ulTaskNotifyTake( pdFALSE, 1000 ) != 0 ) {
+        break;
+      }
+    }
+    //osDelay(10);
   }
   /* USER CODE END StartSimDCMItask */
 }

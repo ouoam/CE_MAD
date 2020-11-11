@@ -87,19 +87,21 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
   uint8_t *startF = (uint8_t*)buffCAM + lineMod*FRAME_SIZE_WIDTH*2;
 
   for (uint32_t i = 0; i < FRAME_SIZE_WIDTH / (8*2); i++) {
-      for (uint32_t j = 0; j < 8*2*2; j+=4) {
-          uint32_t index = j/(8*2)*8*8 + ((j>>1)&0x7);
-          uint32_t index2 = 2*8*8 + (j>>2);
+    uint32_t index2 = 128;
+    for (uint32_t j = 0; j < 8; j++) {
+      uint32_t index = (((j&0x4)<<3) | (j&0x3))<<1;
 
-          startT[index]         = startF[0];
-          startT[index + 1]     = startF[2];
+      startT[index]         = startF[0];
+      startT[index + 1]     = startF[2];
 
-          startT[index2]        = startF[1];
-          startT[index2 + 8*8]  = startF[3];
+      startT[index2]        = startF[1];
+      startT[index2 + 8*8]  = startF[3];
 
-          startF += 4;
-      }
-      startT += 4*8*8;
+      startF += 4;
+      index2++;
+    }
+
+    startT += 4*8*8;
   }
 
   if (lineMod == 7) {

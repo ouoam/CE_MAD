@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "encode_dma.h"
+#include "rtp_protocol.h"
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
 /** @addtogroup STM32F7xx_HAL_Examples
@@ -43,7 +44,7 @@ typedef struct
 #define BYTES_PER_PIXEL    2
 
 #define CHUNK_SIZE_IN   ((uint32_t)(MAX_INPUT_WIDTH * BYTES_PER_PIXEL * MAX_INPUT_LINES))
-#define CHUNK_SIZE_OUT  JPEG_BUFFER_SIZE
+#define CHUNK_SIZE_OUT  RTP_PAYLOAD_SIZE_MAX
 
 #define JPEG_BUFFER_EMPTY       0
 #define JPEG_BUFFER_FULL        1
@@ -53,9 +54,10 @@ typedef struct
 // JPEG_RGBToYCbCr_Convert_Function pRGBToYCbCr_Convert_Function;
 
 extern osSemaphoreId RTP_SendSemaphoreHandle;
+extern osThreadId Thr_Send_Sem;
 
 uint8_t MCU_Data_IntBuffer0[CHUNK_SIZE_IN];
-uint8_t JPEG_buffer[JPEG_BUFFER_SIZE];
+uint8_t JPEG_buffer[CHUNK_SIZE_OUT];
 
 uint32_t JPEG_ImgSize;
 
@@ -243,21 +245,25 @@ void HAL_JPEG_DataReadyCallback (JPEG_HandleTypeDef *hjpeg, uint8_t *pDataOut, u
   Jpeg_OUT_BufferTab.State = JPEG_BUFFER_FULL;
   Jpeg_OUT_BufferTab.DataBufferSize = OutDataLength;
 
-  //HAL_JPEG_Pause(hjpeg, JPEG_PAUSE_RESUME_OUTPUT);
+  HAL_JPEG_Pause(hjpeg, JPEG_PAUSE_RESUME_OUTPUT);
   Output_Is_Paused = 1;
 
   HAL_JPEG_ConfigOutputBuffer(hjpeg, Jpeg_OUT_BufferTab.DataBuffer, CHUNK_SIZE_OUT);
 
-  JPEG_ImgSize = OutDataLength;
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xTaskNotifyFromISR( Thr_Send_Sem, OutDataLength, eSetValueWithoutOverwrite, &xHigherPriorityTaskWoken );
+  portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 
-  Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
-  Jpeg_OUT_BufferTab.DataBufferSize = 0;
-
-  if(Output_Is_Paused == 1)
-  {
-    Output_Is_Paused = 0;
-    //HAL_JPEG_Resume(pJpeg, JPEG_PAUSE_RESUME_OUTPUT);
-  }
+//  JPEG_ImgSize = OutDataLength;
+//
+//  Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
+//  Jpeg_OUT_BufferTab.DataBufferSize = 0;
+//
+//  if(Output_Is_Paused == 1)
+//  {
+//    Output_Is_Paused = 0;
+//    //HAL_JPEG_Resume(pJpeg, JPEG_PAUSE_RESUME_OUTPUT);
+//  }
 
 //  if(HAL_UART_Transmit_DMA(pHuart, Jpeg_OUT_BufferTab.DataBuffer, Jpeg_OUT_BufferTab.DataBufferSize)!= HAL_OK)
 //  {
@@ -265,6 +271,18 @@ void HAL_JPEG_DataReadyCallback (JPEG_HandleTypeDef *hjpeg, uint8_t *pDataOut, u
 //    // Transfer error in transmission process
 //    Error_Handler();
 //  }
+}
+
+void JPEG_EncodeOutputResume()
+{
+  Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
+  Jpeg_OUT_BufferTab.DataBufferSize = 0;
+
+  if(Output_Is_Paused == 1)
+  {
+    Output_Is_Paused = 0;
+    HAL_JPEG_Resume(pJpeg, JPEG_PAUSE_RESUME_OUTPUT);
+  }
 }
 
 //void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
@@ -307,7 +325,30 @@ void HAL_JPEG_EncodeCpltCallback(JPEG_HandleTypeDef *hjpeg)
   Jpeg_HWEncodingEnd = 1;
 
   /* Release the RTP Send semaphore */
-  osSemaphoreRelease(RTP_SendSemaphoreHandle);
+  //osSemaphoreRelease(RTP_SendSemaphoreHandle);
+
+//  BaseType_t xHigherPriorityTaskWoken;
+//
+//  /* The xHigherPriorityTaskWoken parameter must be initialized
+//  to pdFALSE as it will get set to pdTRUE inside the interrupt
+//  safe API function if calling the API function unblocks a task
+//  that has a higher priority than the task in the running state
+//  (the task this ISR interrupted). */
+//  xHigherPriorityTaskWoken = pdFALSE;
+//
+//  /* Send a notification directly to the task that will perform
+//  any processing necessitated by this interrupt. */
+//  vTaskNotifyGiveFromISR( /* The handle of the task to which
+//                          the notification is being sent. */
+//                          Thr_Send_Sem,
+//                          &xHigherPriorityTaskWoken );
+//
+//  /* If xHigherPriorityTaskWoken is now pdTRUE then calling
+//  portYIELD_FROM_ISR() will result in a context switch, and
+//  this interrupt will return directly to the unblocked task.
+//  The FAQ “why is there a separate API for use in interrupts”
+//  describes why it is done this way. */
+//  portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
 /**

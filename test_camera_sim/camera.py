@@ -75,7 +75,7 @@ while True:
             lastlist.append(now - last)
             if len(lastlist) > 100:
                 lastlist = lastlist[-100:]
-            print("{:.5f}".format(1 / (sum(lastlist)/len(lastlist))), "fps", "{:.2f}".format((sum(lastlist)/len(lastlist))*1000), len(img))
+            print("{:.5f}".format(1 / (sum(lastlist)/len(lastlist))), "fps.", "{:.2f}".format((sum(lastlist)/len(lastlist))*1000), "ms.", len(img), "Bytes")
             last = now
             cam.display(img)
         except KeyboardInterrupt:

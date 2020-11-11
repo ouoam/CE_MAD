@@ -729,7 +729,7 @@ void RTSP_Stop(void)
     if(!close(rtsp_struct.sock_id))
     {  
       /* Terminate the RTP thread */
-      if(osThreadTerminate(thr_ID) == osOK)
+      //if(osThreadTerminate(thr_ID) == osOK)
       {
         /* Reset the offset of the RTP/JPEG header */
         RTP_struct.Offset = 0;

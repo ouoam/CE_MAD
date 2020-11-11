@@ -23,6 +23,8 @@
 /* USER CODE BEGIN 0 */
 #include "jpeg.h"
 #include "encode_dma.h"
+#include "FreeRTOS.h"
+#include "cmsis_os.h"
 
 #define RGB_IMAGE_SIZE  ((uint32_t)FRAME_SIZE_HEIGHT * FRAME_SIZE_WIDTH * 2)
 #define CHUNK_SIZE_IN  ((uint32_t)(FRAME_SIZE_WIDTH * 2 * MAX_INPUT_LINES))
@@ -240,7 +242,9 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
     if (line == 7) {
       JPEG_Encode_DMA(&hjpeg, (uint8_t*)MCU_Data_IntBuffer1, RGB_IMAGE_SIZE);
     } else {
-      while (!JPEG_EncodeInputHandler(&hjpeg));
+      while (!JPEG_EncodeInputHandler(&hjpeg)){
+        osDelay(2);
+      }
     }
   }
 

@@ -33,6 +33,8 @@ uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint8_t *RGBImageBufferAddre
 uint8_t JPEG_EncodeOutputHandler(JPEG_HandleTypeDef *hjpeg);
 uint8_t JPEG_EncodeInputHandler(JPEG_HandleTypeDef *hjpeg);
 
+void JPEG_EncodeOutputResume();
+
 #endif /* __ENCODE_DMA_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

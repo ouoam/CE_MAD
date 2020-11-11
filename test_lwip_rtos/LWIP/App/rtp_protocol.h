@@ -60,10 +60,10 @@
 /* Exported functions ------------------------------------------------------- */ 
 /* Exported constants --------------------------------------------------------*/
 #define RTP_VERSION                 0x80
-#define RTP_TIMESTAMP               1500
+#define RTP_TIMESTAMP               700
 #define RTP_MARKER_BIT              0x80
 #define RTP_PACKET_SIZE             1500
-#define RTP_PAYLOAD_SIZE_MAX        1400
+#define RTP_PAYLOAD_SIZE_MAX        1436
 #define RTP_PAYLOAD_TYPE            0x1A    /* define a rtp payload jpeg 26*/
 #define min(x, y) (((x) < (y)) ? (x) : (y))
 
