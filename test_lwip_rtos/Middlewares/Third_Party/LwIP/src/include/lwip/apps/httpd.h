@@ -44,7 +44,7 @@
 #include "httpd_opts.h"
 #include "lwip/err.h"
 #include "lwip/pbuf.h"
-#include "lwip/tcp.h"
+#include "lwip/altcp.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -247,19 +247,19 @@ enum {
   WS_BIN_MODE  = 0x02,
 } WS_MODE;
 
-typedef void (*tWsHandler)(struct tcp_pcb *pcb, uint8_t *data, u16_t data_len, uint8_t mode);
-typedef void (*tWsOpenHandler)(struct tcp_pcb *pcb, const char *uri);
+typedef void (*tWsHandler)(struct altcp_pcb *pcb, uint8_t *data, u16_t data_len, uint8_t mode);
+typedef void (*tWsOpenHandler)(struct altcp_pcb *pcb, const char *uri);
 
 /**
  * Write data into a websocket.
  *
- * @param pcb tcp_pcb to send.
+ * @param pcb altcp_pcb to send.
  * @param data data to send.
  * @param len data length.
  * @param mode WS_TEXT_MODE or WS_BIN_MODE.
  * @return ERR_OK if write succeeded.
  */
-err_t websocket_write(struct tcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t mode);
+err_t websocket_write(struct altcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t mode);
 
 /**
  * Register websocket callback functions. Use NULL if callback is not needed.

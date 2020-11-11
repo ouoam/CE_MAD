@@ -341,7 +341,7 @@ static err_t http_init_file(struct http_state *hs, struct fs_file *file, int is_
 static err_t http_poll(void *arg, struct altcp_pcb *pcb);
 static u8_t http_check_eof(struct altcp_pcb *pcb, struct http_state *hs);
 
-static err_t websocket_send_close(struct tcp_pcb *pcb);
+static err_t websocket_send_close(struct altcp_pcb *pcb);
 
 #if LWIP_HTTPD_FS_ASYNC_READ
 static void http_continue(void *connection);
@@ -2096,7 +2096,7 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pc
             /* Send response */
             memcpy(&retval_ptr[olen], CRLF CRLF, sizeof(CRLF CRLF));
             LWIP_DEBUGF(HTTPD_DEBUG, ("Sending:\n%s\n", retval));
-            tcp_write(pcb, retval, WS_RSP_LEN - 1, 0);
+            altcp_write(pcb, retval, WS_RSP_LEN - 1, 0);
             hs->is_websocket = 1;
           }
           mem_free(retval);
@@ -2628,7 +2628,7 @@ websocket_register_callbacks(tWsOpenHandler ws_open_cb, tWsHandler ws_cb)
 }
 
 err_t
-websocket_write(struct tcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t mode)
+websocket_write(struct altcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t mode)
 {
   uint8_t *buf = mem_malloc(len + 4);
   if (buf == NULL) {
@@ -2661,12 +2661,12 @@ websocket_write(struct tcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t 
  * Send status code 1000 (normal closure).
  */
 static err_t
-websocket_send_close(struct tcp_pcb *pcb)
+websocket_send_close(struct altcp_pcb *pcb)
 {
   const u8_t buf[] = {0x88, 0x02, 0x03, 0xe8};
   u16_t len = sizeof (buf);
   LWIP_DEBUGF(HTTPD_DEBUG, ("[wsoc] closing connection\n"));
-  return tcp_write(pcb, buf, len, TCP_WRITE_FLAG_COPY);
+  return altcp_write(pcb, buf, len, TCP_WRITE_FLAG_COPY);
 }
 
 /**
@@ -2677,7 +2677,7 @@ websocket_send_close(struct tcp_pcb *pcb)
  *         ERR_VAL: invalid frame.
  */
 static err_t
-websocket_parse(struct tcp_pcb *pcb, struct pbuf *p)
+websocket_parse(struct altcp_pcb *pcb, struct pbuf *p)
 {
   u8_t *data = (u8_t *) p->payload;
   u16_t data_len = p->len;
@@ -2758,7 +2758,7 @@ http_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
       http_close_or_abort_conn(pcb, hs, 0);
       return ERR_BUF;
     }
-    tcp_recved(pcb, p->tot_len);
+    altcp_recved(pcb, p->tot_len);
     err_t err = websocket_parse(pcb, p);
     if (p != NULL) {
       /* otherwise tcp buffer hogs */
