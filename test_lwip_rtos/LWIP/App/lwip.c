@@ -52,6 +52,27 @@ ip4_addr_t gw;
 
 /* USER CODE BEGIN 2 */
 
+/**
+ * This function is called when websocket frame is received.
+ *
+ * Note: this function is executed on TCP thread and should return as soon
+ * as possible.
+ */
+void websocket_cb(struct tcp_pcb *pcb, uint8_t *data, u16_t data_len, uint8_t mode)
+{
+    printf("[websocket_callback]:\n%.*s\n", (int) data_len, (char*) data);
+
+    websocket_write(pcb, data, data_len, WS_BIN_MODE);
+}
+
+/**
+ * This function is called when new websocket is open and
+ * creates a new websocket_task if requested URI equals '/stream'.
+ */
+void websocket_open_cb(struct tcp_pcb *pcb, const char *uri)
+{
+    printf("WS URI: %s\n", uri);
+}
 /* USER CODE END 2 */
 
 /**
@@ -104,6 +125,8 @@ void MX_LWIP_Init(void)
 
 /* USER CODE BEGIN 3 */
   RTSP_Init();
+
+  websocket_register_callbacks((tWsOpenHandler) websocket_open_cb, (tWsHandler) websocket_cb);
   httpd_init();
 /* USER CODE END 3 */
 }

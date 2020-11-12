@@ -134,6 +134,8 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+  /* init code for LWIP */
+  MX_LWIP_Init();
   /* Infinite loop */
   for(;;)
   {
