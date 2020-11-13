@@ -148,7 +148,6 @@
 
 #include <mbedtls/sha1.h>
 #include <mbedtls/base64.h>
-#include "strcasestr.h"
 
 static const char WS_HEADER[] = "Upgrade: websocket\r\n";
 static const char WS_GUID[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -2056,12 +2055,12 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pc
 
   /* Parse WebSocket request */
   hs->is_websocket = 0;
-  if (strncasestr(data, WS_HEADER, data_len)) {
+  if (lwip_strnstr(data, WS_HEADER, data_len)) {
     LWIP_DEBUGF(HTTPD_DEBUG, ("WebSocket opening handshake\n"));
-    char *key_start = strncasestr(data, WS_KEY, data_len);
+    char *key_start = lwip_strnstr(data, WS_KEY, data_len);
     if (key_start) {
       key_start += sizeof(WS_KEY) - 1;
-      char *key_end = strnstr(key_start, CRLF, data_len);
+      char *key_end = lwip_strnstr(key_start, CRLF, data_len);
       if (key_end) {
         char key[64];
         int len = sizeof(char) * (key_end - key_start);
@@ -2630,6 +2629,7 @@ websocket_register_callbacks(tWsOpenHandler ws_open_cb, tWsHandler ws_cb)
 err_t
 websocket_write(struct altcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t mode)
 {
+  // TODO check have send open packet
   uint8_t *buf = mem_malloc(len + 4);
   if (buf == NULL) {
     LWIP_DEBUGF(HTTPD_DEBUG, ("[websocket_write] out of memory\n"));

@@ -145,6 +145,11 @@
 #define LWIP_TCP 1
 
 #define LWIP_HTTPD_DYNAMIC_HEADERS 1
+
+#define lwip_strnstr strnstr
+#define lwip_stricmp stricmp
+#define lwip_strnicmp strnicmp
+
 /* USER CODE END 1 */
 
 #ifdef __cplusplus
