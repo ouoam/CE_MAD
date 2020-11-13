@@ -24,6 +24,7 @@
 #include "dma.h"
 #include "jpeg.h"
 #include "mbedtls.h"
+#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -119,7 +120,12 @@ int main(void)
   MX_JPEG_Init();
   MX_DCMI_Init();
   MX_MBEDTLS_Init();
+  MX_TIM11_Init();
+  MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1);
+
   printf("test\r\n");
   /* USER CODE END 2 */
 

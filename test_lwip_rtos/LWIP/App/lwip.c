@@ -27,17 +27,17 @@
 #include "ethernetif.h"
 
 /* USER CODE BEGIN 0 */
-#include "rtsp_protocol.h"
-#include "rtp_protocol.h"
-
 #include "lwip/apps/httpd.h"
+
+#include "encode_dma.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 /* ETH Variables initialization ----------------------------------------------*/
 void Error_Handler(void);
 
 /* USER CODE BEGIN 1 */
-
+osThreadId simDCMItaskHandle;
+osThreadId webSocketTaskHandle;
 /* USER CODE END 1 */
 /* Semaphore to signal Ethernet Link state update */
 osSemaphoreId Netif_LinkSemaphore = NULL;
@@ -51,6 +51,38 @@ ip4_addr_t netmask;
 ip4_addr_t gw;
 
 /* USER CODE BEGIN 2 */
+
+void websocket_task(void const * argument)
+{
+    struct tcp_pcb *pcb = (struct tcp_pcb *) argument;
+
+    static int c = 523;
+
+    for (;;) {
+        if (pcb == NULL || pcb->state != ESTABLISHED) {
+            printf("Connection closed, deleting task\n");
+//            osThreadTerminate(simDCMItaskHandle);
+            break;
+        }
+
+        int uptime = xTaskGetTickCount() * portTICK_PERIOD_MS / 1000;
+        int heap = (int) xPortGetFreeHeapSize();
+
+        /* Generate response in JSON format */
+        char response[64];
+        int len = snprintf(response, sizeof (response),
+                "{\"uptime\" : \"%d\","
+                " \"heap\" : \"%d\","
+                " \"led\" : \"%d\"}", uptime, heap, c);
+        c++;
+        if (len < sizeof (response))
+            websocket_write(pcb, (unsigned char *) response, len, WS_TEXT_MODE);
+
+        osDelay(2000 / portTICK_PERIOD_MS);
+    }
+
+    osThreadTerminate(NULL);
+}
 
 /**
  * This function is called when websocket frame is received.
@@ -72,6 +104,9 @@ void websocket_cb(struct tcp_pcb *pcb, uint8_t *data, u16_t data_len, uint8_t mo
 void websocket_open_cb(struct tcp_pcb *pcb, const char *uri)
 {
     printf("WS URI: %s\n", uri);
+
+    osThreadDef(webSocket, websocket_task, osPriorityBelowNormal, 0, configMINIMAL_STACK_SIZE * 4);
+    webSocketTaskHandle = osThreadCreate(osThread(webSocket), (void *)pcb);
 }
 /* USER CODE END 2 */
 
@@ -124,7 +159,7 @@ void MX_LWIP_Init(void)
   dhcp_start(&gnetif);
 
 /* USER CODE BEGIN 3 */
-  RTSP_Init();
+  // RTSP_Init();
 
   websocket_register_callbacks((tWsOpenHandler) websocket_open_cb, (tWsHandler) websocket_cb);
   httpd_init();
