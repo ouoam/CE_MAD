@@ -61,14 +61,15 @@ websocket.onmessage = function(evt) {
   if (typeof evt.data == "string") {
 	if (evt.data == 'E') {
       //console.image("data:image/jpeg;base64," + _arrayBufferToBase64(out));
-      document.getElementById('pic').src = "data:image/jpeg;base64," + _arrayBufferToBase64(out);
+      //document.getElementById('pic').src = "data:image/jpeg;base64," + _arrayBufferToBase64(out);
       out = new Uint8Array();
 	} else {
 	  console.log(evt.data);
 	}
   } else {
     out = _appendBuffer(out, evt.data);
-    //document.getElementById('pic').src = "data:image/jpeg;base64," + _arrayBufferToBase64(out);
+    document.getElementById('pic').src = "data:image/jpeg;base64," + _arrayBufferToBase64(out);
+    if (evt.data.length != 1400) out = new Uint8Array();
   }
 }
 

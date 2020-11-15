@@ -155,14 +155,14 @@ void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len
       {
 //        osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
 //        simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
-        qid_MailQueue = osMailCreate (osMailQ(MailQueue), NULL);
+//        qid_MailQueue = osMailCreate (osMailQ(MailQueue), NULL);
 
         ov7670_init(&hdcmi, &hi2c2);
         osDelay(100);
         HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
 
-        osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
-        wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
+//        osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
+//        wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
       }
       break;
     case WEBSOCKET_DISCONNECT_EXTERNAL:
@@ -360,9 +360,9 @@ void MX_LWIP_Init(void)
 
   qid_MailQueue = osMailCreate (osMailQ(MailQueue), NULL);
 
-  ov7670_init(&hdcmi, &hi2c2);
-  osDelay(100);
-  HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
+//  ov7670_init(&hdcmi, &hi2c2);
+//  osDelay(100);
+//  HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
 
   osThreadDef(wsPic, wsPicTask, osPriorityRealtime, 0, configMINIMAL_STACK_SIZE * 4);
   wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);

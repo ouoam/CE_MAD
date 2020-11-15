@@ -168,7 +168,7 @@ uint8_t JPEG_EncodeInputHandler(JPEG_HandleTypeDef *hjpeg)
 {
   uint32_t DataBufferSize = Conf.ImageWidth * MAX_INPUT_LINES * BYTES_PER_PIXEL;
 
-  if((Jpeg_IN_BufferTab.State == JPEG_BUFFER_EMPTY) && (MCU_BlockIndex <= MCU_TotalNb))
+  //if((Jpeg_IN_BufferTab.State == JPEG_BUFFER_EMPTY) && (MCU_BlockIndex <= MCU_TotalNb))
   {
     /* Read and reorder lines from RGB input and fill data buffer */
     if(RGB_InputImageIndex < RGB_InputImageSize_Bytes)
@@ -193,9 +193,10 @@ uint8_t JPEG_EncodeInputHandler(JPEG_HandleTypeDef *hjpeg)
       MCU_BlockIndex++;
     }
     return 1;
-  } else {
-    return 0;
   }
+//  else {
+//    return 0;
+//  }
 }
 
 /**
