@@ -56,6 +56,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 void RGB_GetInfo(JPEG_ConfTypeDef *pInfo);
+int map(int st1, int fn1, int st2, int fn2, int value);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -128,18 +129,7 @@ void RGB_GetInfo(JPEG_ConfTypeDef *pInfo);
 #define MAX_INPUT_WIDTH          800                    /* Set the Maximum of RGB input images Width to be encoded */
 #define MAX_INPUT_LINES          8                      /* Set Input buffer lines to 16 for YCbCr420, and 8 for YCbCr422 and YCbCr444 (to save RAM space) */
 
-#define JPEG_BUFFER_SIZE         ((uint32_t) (16 * 1024))
-
-
-/* Genaral configuration for RTSP protocol */
-#define TARGET_IP_ADDRESS    inet_addr("192.168.88.101")      /* Target IP adress */
-#define RTSP_URL             "rtsp://192.168.88.99"          /* RTSP source URL */
-#define RTSP_SERVER_PORT     ";server_port=49152-49153\r\n" /* RTSP server port */
-#define RSTP_PORT            554       /* RTSP network port */
-#define MAX_NB_CLIENT        2         /* Max Number of clients, default value is 2 */
-
-/* Genaral configuration for RTP protocol */
-#define RTP_PORT                    49152
+#define JPEG_BUFFER_SIZE         (1400)
 
 /* USER CODE END Private defines */
 

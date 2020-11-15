@@ -77,6 +77,11 @@ int _write(int file, char *ptr, int len)
 
   return len;
 }
+
+int map(int st1, int fn1, int st2, int fn2, int value)
+{
+    return (1.0*(value-st1))/((fn1-st1)*1.0) * (fn2-st2)+st2;
+}
 /* USER CODE END 0 */
 
 /**
@@ -123,6 +128,8 @@ int main(void)
   MX_TIM11_Init();
   MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
+  __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, map(0,180,50,250,250));
+  __HAL_TIM_SET_COMPARE(&htim14, TIM_CHANNEL_1, map(0,180,50,250,230));
   HAL_TIM_PWM_Start(&htim11, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1);
 

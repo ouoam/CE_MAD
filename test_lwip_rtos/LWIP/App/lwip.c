@@ -27,9 +27,15 @@
 #include "ethernetif.h"
 
 /* USER CODE BEGIN 0 */
+#include <string.h>
+
+#include "dcmi.h"
+
 #include "lwip/apps/httpd.h"
 
 #include "encode_dma.h"
+
+#include "websocket_server.h"
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
 /* ETH Variables initialization ----------------------------------------------*/
@@ -37,7 +43,6 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN 1 */
 osThreadId simDCMItaskHandle;
-osThreadId webSocketTaskHandle;
 osThreadId wsPicTaskHandle;
 
 extern TIM_HandleTypeDef htim11;
@@ -108,82 +113,196 @@ void StartSimDCMItask(void const * argument)
 
 uint8_t JPEG_buffer2[JPEG_BUFFER_SIZE];
 
-//void wsPicTask(void const * argument)
-//{
-//  uint32_t len = 0;
-//  for (;;) {
-//    if( xTaskNotifyWait( 0, 0, &len, 1000 ) != 0 )
-//    {
-//      //ws_server_send_bin_all((char*)JPEG_buffer, len);
-//      websocket_write(pcb, data, data_len, WS_BIN_MODE);
-//      JPEG_EncodeOutputResume();
-//      if (len != JPEG_BUFFER_SIZE) {
-//        osDelay(100000);
-//        //ws_server_send_text_all("E", 1);
-//        websocket_write(pcb, "E", 1, WS_TEXT_MODE);
-//        xTaskNotifyGive(simDCMItaskHandle);
-//      }
-//
-//    }
-//  }
-//}
-
-void websocket_task(void const * argument)
+void wsPicTask(void const * argument)
 {
-    struct tcp_pcb *pcb = (struct tcp_pcb *) argument;
+  uint32_t len = 0;
+  for (;;) {
+    if( xTaskNotifyWait( 0, 0, &len, 1000 ) != 0 )
+    {
+      ws_server_send_bin_all((char*)JPEG_buffer, len);
+      JPEG_EncodeOutputResume();
+      if (len != JPEG_BUFFER_SIZE) {
+        osDelay(100000);
+        ws_server_send_text_all("E", 1);
+        xTaskNotifyGive(simDCMItaskHandle);
+      }
 
-    static int c = 523;
-
-    for (;;) {
-        if (pcb == NULL || pcb->state != ESTABLISHED) {
-            printf("Connection closed, deleting task\n");
-//            osThreadTerminate(simDCMItaskHandle);
-            break;
-        }
-
-        int uptime = xTaskGetTickCount() * portTICK_PERIOD_MS / 1000;
-        int heap = (int) xPortGetFreeHeapSize();
-
-        /* Generate response in JSON format */
-        char response[64];
-        int len = snprintf(response, sizeof (response),
-                "{\"uptime\" : \"%d\","
-                " \"heap\" : \"%d\","
-                " \"led\" : \"%d\"}", uptime, heap, c);
-        c++;
-        if (len < sizeof (response))
-            websocket_write(pcb, (unsigned char *) response, len, WS_TEXT_MODE);
-
-        osDelay(2000 / portTICK_PERIOD_MS);
     }
-
-    osThreadTerminate(NULL);
+  }
 }
 
-/**
- * This function is called when websocket frame is received.
- *
- * Note: this function is executed on TCP thread and should return as soon
- * as possible.
- */
-void websocket_cb(struct tcp_pcb *pcb, uint8_t *data, u16_t data_len, uint8_t mode)
-{
-    printf("[websocket_callback]:\n%.*s\n", (int) data_len, (char*) data);
+// handles websocket events
+void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len) {
+  //const static char* TAG = "websocket_callback";
 
-    websocket_write(pcb, data, data_len, WS_BIN_MODE);
+  switch(type) {
+    case WEBSOCKET_CONNECT:
+      {
+        osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
+        simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
+
+        osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
+        wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
+      }
+      break;
+    case WEBSOCKET_DISCONNECT_EXTERNAL:
+      //ESP_LOGI(TAG,"client %i sent a disconnect message",num);
+      //led_duty(0);
+      //break;
+    case WEBSOCKET_DISCONNECT_INTERNAL:
+      //ESP_LOGI(TAG,"client %i was disconnected",num);
+      //break;
+    case WEBSOCKET_DISCONNECT_ERROR:
+      //ESP_LOGI(TAG,"client %i was disconnected due to an error",num);
+      //led_duty(0);
+      osThreadTerminate(simDCMItaskHandle);
+      break;
+    case WEBSOCKET_TEXT:
+      if(len) { // if the message length was greater than zero
+        if(len == 1) {
+          static int8_t ch11=9;
+          static int8_t ch14=9;
+
+          switch(msg[0]) {
+            case 'w': ch11++; break;
+            case 's': ch11--; break;
+            case 'a': ch14++; break;
+            case 'd': ch14--; break;
+          }
+
+          if (ch11 < 10) ch11 = 10;
+          if (ch11 > 30) ch11 = 30;
+          if (ch14 < 7) ch14 = 7;
+          if (ch14 > 40) ch14 = 40;
+
+          __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, map(0,180,50,250,ch11*10));
+          __HAL_TIM_SET_COMPARE(&htim14, TIM_CHANNEL_1, map(0,180,50,250,ch14*10));
+
+          char response[64];
+          int len = snprintf(response, sizeof (response),
+                  "%d,%d", ch11, ch14);
+          if (len < sizeof (response))
+            ws_server_send_text_all_from_callback(response, len);
+        }
+      }
+      break;
+    case WEBSOCKET_BIN:
+      //ESP_LOGI(TAG,"client %i sent binary message of size %i:\n%s",num,(uint32_t)len,msg);
+      break;
+    case WEBSOCKET_PING:
+      //ESP_LOGI(TAG,"client %i pinged us with message of size %i:\n%s",num,(uint32_t)len,msg);
+      break;
+    case WEBSOCKET_PONG:
+      //ESP_LOGI(TAG,"client %i responded to the ping",num);
+      break;
+  }
 }
 
-/**
- * This function is called when new websocket is open and
- * creates a new websocket_task if requested URI equals '/stream'.
- */
-void websocket_open_cb(struct tcp_pcb *pcb, const char *uri)
-{
-    printf("WS URI: %s\n", uri);
+// serves any clients
+static void http_serve(struct netconn *conn) {
+  //const static char* TAG = "http_server";
+  struct netbuf* inbuf;
+  static char* buf;
+  static uint16_t buflen;
+  static err_t err;
 
-    osThreadDef(webSocket, websocket_task, osPriorityBelowNormal, 0, configMINIMAL_STACK_SIZE * 4);
-    webSocketTaskHandle = osThreadCreate(osThread(webSocket), (void *)pcb);
+  //netconn_set_recvtimeout(conn,1000); // allow a connection timeout of 1 second
+  //ESP_LOGI(TAG,"reading from client...");
+  err = netconn_recv(conn, &inbuf);
+  //ESP_LOGI(TAG,"read from client");
+  if(err==ERR_OK) {
+    netbuf_data(inbuf, (void**)&buf, &buflen);
+    if(buf) {
+
+      // default page websocket
+      if(strstr(buf,"GET /")
+           && strstr(buf,"Upgrade: websocket")) {
+        //ESP_LOGI(TAG,"Requesting websocket on /");
+        ws_server_add_client(conn,buf,buflen,"/",websocket_callback);
+        netbuf_delete(inbuf);
+      }
+      else {
+        //ESP_LOGI(TAG,"Unknown request");
+        netconn_close(conn);
+        netconn_delete(conn);
+        netbuf_delete(inbuf);
+      }
+    }
+    else {
+      //ESP_LOGI(TAG,"Unknown request (empty?...)");
+      netconn_close(conn);
+      netconn_delete(conn);
+      netbuf_delete(inbuf);
+    }
+  }
+  else { // if err==ERR_OK
+    //ESP_LOGI(TAG,"error on read, closing connection");
+    netconn_close(conn);
+    netconn_delete(conn);
+    netbuf_delete(inbuf);
+  }
 }
+
+// handles clients when they first connect. passes to a queue
+static void server_task(void const * pvParameters) {
+  //const static char* TAG = "server_task";
+  struct netconn *conn, *newconn;
+  static err_t err;
+  client_queue = xQueueCreate(client_queue_size,sizeof(struct netconn*));
+
+  conn = netconn_new(NETCONN_TCP);
+  netconn_bind(conn,NULL,8080);
+  netconn_listen(conn);
+  //ESP_LOGI(TAG,"server listening");
+  do {
+    err = netconn_accept(conn, &newconn);
+    //ESP_LOGI(TAG,"new client");
+    if(err == ERR_OK) {
+      xQueueSendToBack(client_queue,&newconn,portMAX_DELAY);
+      //http_serve(newconn);
+    }
+  } while(err == ERR_OK);
+  netconn_close(conn);
+  netconn_delete(conn);
+  //ESP_LOGE(TAG,"task ending, rebooting board");
+  //esp_restart();
+}
+
+// receives clients from queue, handles them
+static void server_handle_task(void const * pvParameters) {
+  //const static char* TAG = "server_handle_task";
+  struct netconn* conn;
+  //ESP_LOGI(TAG,"task starting");
+  for(;;) {
+    xQueueReceive(client_queue,&conn,portMAX_DELAY);
+    if(!conn) continue;
+    http_serve(conn);
+  }
+  vTaskDelete(NULL);
+}
+
+static void count_task(void* pvParameters) {
+  //const static char* TAG = "count_task";
+  char out[20];
+  int len;
+  int clients;
+  const static char* word = "%i";
+  uint8_t n = 0;
+  const int DELAY = 1000 / portTICK_PERIOD_MS; // 1 second
+
+  //ESP_LOGI(TAG,"starting task");
+  for(;;) {
+    len = sprintf(out,word,n);
+    clients = ws_server_send_text_all(out,len);
+    if(clients > 0) {
+      printf("count_task : " "sent: \"%s\" to %i clients",out,clients);
+    }
+    n++;
+    vTaskDelay(DELAY);
+  }
+}
+
+
 /* USER CODE END 2 */
 
 /**
@@ -228,23 +347,38 @@ void MX_LWIP_Init(void)
   /* Create the Ethernet link handler thread */
 /* USER CODE BEGIN OS_THREAD_DEF_CREATE_CMSIS_RTOS_V1 */
   osThreadDef(LinkThr, ethernetif_set_link, osPriorityBelowNormal, 0, configMINIMAL_STACK_SIZE * 2);
-  osThreadCreate (osThread(LinkThr), &link_arg);
+  osThreadCreate(osThread(LinkThr), &link_arg);
 /* USER CODE END OS_THREAD_DEF_CREATE_CMSIS_RTOS_V1 */
 
   /* Start DHCP negotiation for a network interface (IPv4) */
   dhcp_start(&gnetif);
 
 /* USER CODE BEGIN 3 */
-  // RTSP_Init();
 
-  websocket_register_callbacks((tWsOpenHandler) websocket_open_cb, (tWsHandler) websocket_cb);
-  httpd_init();
+//  websocket_register_callbacks((tWsOpenHandler) websocket_open_cb, (tWsHandler) websocket_cb);
 
-  osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
-  simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
+//  ws_server_start();
+////  xTaskCreate(&server_task,"server_task",3000,NULL,5,NULL);
+////  xTaskCreate(&server_handle_task,"server_handle_task",4000,NULL,6,NULL);
+//  //xTaskCreate(&count_task,"count_task",6000,NULL,2,NULL);
+//
+//  osThreadDef(server_task, server_task, osPriorityAboveNormal, 0, 3000);
+//  osThreadCreate(osThread(server_task), NULL);
+//
+//  osThreadDef(server_handle_task, server_handle_task, osPriorityAboveNormal, 0, 4000);
+//  osThreadCreate(osThread(server_handle_task), NULL);
+
+//  osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
+//  simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
 
 //  osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
 //  wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
+
+  for (;;) {
+    StartSimDCMItask(NULL);
+  }
+
+  //httpd_init();
 /* USER CODE END 3 */
 }
 
