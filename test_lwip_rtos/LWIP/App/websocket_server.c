@@ -114,22 +114,14 @@ static void ws_server_task(void* pvParameters) {
 
 int ws_server_start() {
   if(xtask) return 0;
-  #if WEBSOCKET_SERVER_PINNED
-  xTaskCreatePinnedToCore(&ws_server_task,
-                          "ws_server_task",
-                          WEBSOCKET_SERVER_TASK_STACK_DEPTH,
-                          NULL,
-                          WEBSOCKET_SERVER_TASK_PRIORITY,
-                          &xtask,
-                          WEBSOCKET_SERVER_PINNED_CORE);
-  #else
+
   xTaskCreate(&ws_server_task,
               "ws_server_task",
               WEBSOCKET_SERVER_TASK_STACK_DEPTH,
               NULL,
               WEBSOCKET_SERVER_TASK_PRIORITY,
               &xtask);
-  #endif
+
   return 1;
 }
 

@@ -130,17 +130,11 @@ uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint8_t *RGBImageBufferAddre
     RGB_InputImageIndex += DataBufferSize;
   }
 
-  taskENTER_CRITICAL();
-  {
-
   /* Fill Encoding Params */
   HAL_JPEG_ConfigEncoding(hjpeg, &Conf);
 
   /* Start JPEG encoding with DMA method */
   HAL_JPEG_Encode_DMA(hjpeg, Jpeg_IN_BufferTab.DataBuffer, Jpeg_IN_BufferTab.DataBufferSize, Jpeg_OUT_BufferTab.DataBuffer, CHUNK_SIZE_OUT);
-
-  }
-  taskEXIT_CRITICAL();
   return 0;
 }
 

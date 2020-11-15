@@ -52,8 +52,6 @@ extern uint8_t buffCAM[MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2];
 extern DCMI_HandleTypeDef hdcmi;
 extern uint8_t JPEG_buffer[JPEG_BUFFER_SIZE];
 
-static QueueHandle_t client_queue;
-const static int client_queue_size = 10;
 /* USER CODE END 1 */
 /* Semaphore to signal Ethernet Link state update */
 osSemaphoreId Netif_LinkSemaphore = NULL;
@@ -65,6 +63,9 @@ struct netif gnetif;
 ip4_addr_t ipaddr;
 ip4_addr_t netmask;
 ip4_addr_t gw;
+uint8_t IP_ADDRESS[4];
+uint8_t NETMASK_ADDRESS[4];
+uint8_t GATEWAY_ADDRESS[4];
 
 /* USER CODE BEGIN 2 */
 
@@ -88,7 +89,9 @@ void StartSimDCMItask(void const * argument)
         startF = (uint32_t*)buffCAM;
       }
       for (uint32_t j = 0; j < 0xFF00; j+=(0xFF00/(FRAME_SIZE_WIDTH*2/4))) {
-        *startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
+        //*startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
+        //*startF++ = round;
+        *startF++ = (j & 0xFF00) | (i & 0xFF000000);
         //*startF++ = 0x007F007F00 | (j & 0xFF00) | (i & 0xFF000000);
       }
       //printf("Sim Line\r\n");
@@ -138,10 +141,10 @@ void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len
   switch(type) {
     case WEBSOCKET_CONNECT:
       {
-        osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 8);
+        osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
         simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
 
-        osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 8);
+        osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
         wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
       }
       break;
@@ -249,7 +252,6 @@ static void server_task(void const * pvParameters) {
   //const static char* TAG = "server_task";
   struct netconn *conn, *newconn;
   static err_t err;
-  client_queue = xQueueCreate(client_queue_size,sizeof(struct netconn*));
 
   conn = netconn_new(NETCONN_TCP);
   netconn_bind(conn,NULL,8080);
@@ -259,7 +261,8 @@ static void server_task(void const * pvParameters) {
     err = netconn_accept(conn, &newconn);
     //ESP_LOGI(TAG,"new client");
     if(err == ERR_OK) {
-      xQueueSendToBack(client_queue,&newconn,portMAX_DELAY);
+      if(!newconn) continue;
+          http_serve(newconn);
       //http_serve(newconn);
     }
   } while(err == ERR_OK);
@@ -269,41 +272,6 @@ static void server_task(void const * pvParameters) {
   //esp_restart();
 }
 
-// receives clients from queue, handles them
-static void server_handle_task(void const * pvParameters) {
-  //const static char* TAG = "server_handle_task";
-  struct netconn* conn;
-  //ESP_LOGI(TAG,"task starting");
-  for(;;) {
-    xQueueReceive(client_queue,&conn,portMAX_DELAY);
-    if(!conn) continue;
-    http_serve(conn);
-  }
-  vTaskDelete(NULL);
-}
-
-static void count_task(void* pvParameters) {
-  //const static char* TAG = "count_task";
-  char out[20];
-  int len;
-  int clients;
-  const static char* word = "%i";
-  uint8_t n = 0;
-  const int DELAY = 1000 / portTICK_PERIOD_MS; // 1 second
-
-  //ESP_LOGI(TAG,"starting task");
-  for(;;) {
-    len = sprintf(out,word,n);
-    clients = ws_server_send_text_all(out,len);
-    if(clients > 0) {
-      printf("count_task : " "sent: \"%s\" to %i clients",out,clients);
-    }
-    n++;
-    vTaskDelay(DELAY);
-  }
-}
-
-
 /* USER CODE END 2 */
 
 /**
@@ -311,13 +279,27 @@ static void count_task(void* pvParameters) {
   */
 void MX_LWIP_Init(void)
 {
+  /* IP addresses initialization */
+  IP_ADDRESS[0] = 192;
+  IP_ADDRESS[1] = 168;
+  IP_ADDRESS[2] = 88;
+  IP_ADDRESS[3] = 99;
+  NETMASK_ADDRESS[0] = 255;
+  NETMASK_ADDRESS[1] = 255;
+  NETMASK_ADDRESS[2] = 255;
+  NETMASK_ADDRESS[3] = 0;
+  GATEWAY_ADDRESS[0] = 192;
+  GATEWAY_ADDRESS[1] = 168;
+  GATEWAY_ADDRESS[2] = 88;
+  GATEWAY_ADDRESS[3] = 99;
+
   /* Initilialize the LwIP stack with RTOS */
   tcpip_init( NULL, NULL );
 
-  /* IP addresses initialization with DHCP (IPv4) */
-  ipaddr.addr = 0;
-  netmask.addr = 0;
-  gw.addr = 0;
+  /* IP addresses initialization without DHCP (IPv4) */
+  IP4_ADDR(&ipaddr, IP_ADDRESS[0], IP_ADDRESS[1], IP_ADDRESS[2], IP_ADDRESS[3]);
+  IP4_ADDR(&netmask, NETMASK_ADDRESS[0], NETMASK_ADDRESS[1] , NETMASK_ADDRESS[2], NETMASK_ADDRESS[3]);
+  IP4_ADDR(&gw, GATEWAY_ADDRESS[0], GATEWAY_ADDRESS[1], GATEWAY_ADDRESS[2], GATEWAY_ADDRESS[3]);
 
   /* add the network interface (IPv4/IPv6) with RTOS */
   netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
@@ -351,33 +333,11 @@ void MX_LWIP_Init(void)
   osThreadCreate(osThread(LinkThr), &link_arg);
 /* USER CODE END OS_THREAD_DEF_CREATE_CMSIS_RTOS_V1 */
 
-  /* Start DHCP negotiation for a network interface (IPv4) */
-  dhcp_start(&gnetif);
-
 /* USER CODE BEGIN 3 */
-
-//  websocket_register_callbacks((tWsOpenHandler) websocket_open_cb, (tWsHandler) websocket_cb);
-
   ws_server_start();
-////  xTaskCreate(&server_task,"server_task",3000,NULL,5,NULL);
-////  xTaskCreate(&server_handle_task,"server_handle_task",4000,NULL,6,NULL);
-//  //xTaskCreate(&count_task,"count_task",6000,NULL,2,NULL);
 
-  osThreadDef(server_task, server_task, osPriorityAboveNormal, 0, 3000);
+  osThreadDef(server_task, server_task, osPriorityAboveNormal, 0, configMINIMAL_STACK_SIZE * 4);
   osThreadCreate(osThread(server_task), NULL);
-
-  osThreadDef(server_handle_task, server_handle_task, osPriorityAboveNormal, 0, 4000);
-  osThreadCreate(osThread(server_handle_task), NULL);
-
-//  osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
-//  simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
-
-//  osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
-//  wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
-
-//  for (;;) {
-//    StartSimDCMItask(NULL);
-//  }
 
   httpd_init();
 /* USER CODE END 3 */
