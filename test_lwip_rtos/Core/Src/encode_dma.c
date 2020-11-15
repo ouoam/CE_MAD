@@ -53,6 +53,7 @@ typedef struct
 /* Private variables ---------------------------------------------------------*/
 
 extern osThreadId wsPicTaskHandle;
+extern osThreadId simDCMItaskHandle;
 
 uint8_t MCU_Data_IntBuffer0[CHUNK_SIZE_IN];
 uint8_t JPEG_buffer[CHUNK_SIZE_OUT] __attribute__((section(".JPEGSection")));
@@ -147,7 +148,6 @@ uint8_t JPEG_EncodeOutputHandler(JPEG_HandleTypeDef *hjpeg)
 {
   if(Jpeg_HWEncodingEnd != 0)
   {
-    // while (pHuart->gState != HAL_UART_STATE_READY);
     return 1;
   }
 
@@ -168,14 +168,8 @@ uint8_t JPEG_EncodeInputHandler(JPEG_HandleTypeDef *hjpeg)
     /* Read and reorder lines from RGB input and fill data buffer */
     if(RGB_InputImageIndex < RGB_InputImageSize_Bytes)
     {
-      /* Pre-Processing */
-      //MCU_BlockIndex += pRGBToYCbCr_Convert_Function((uint8_t *)(RGB_InputImageAddress + RGB_InputImageIndex), Jpeg_IN_BufferTab.DataBuffer, 0, DataBufferSize, (uint32_t*)(&Jpeg_IN_BufferTab.DataBufferSize));
-
       MCU_BlockIndex += Conf.ImageWidth / 16;
       Jpeg_IN_BufferTab.DataBufferSize = Conf.ImageWidth * MAX_INPUT_LINES * BYTES_PER_PIXEL;
-//      for (int i = 0; i < DataBufferSize; i++) {
-//        Jpeg_IN_BufferTab.DataBuffer[i] = RGB_InputImageAddress[i];
-//      }
       Jpeg_IN_BufferTab.DataBuffer = RGB_InputImageAddress;
 
       Jpeg_IN_BufferTab.State = JPEG_BUFFER_FULL;
@@ -245,24 +239,6 @@ void HAL_JPEG_DataReadyCallback (JPEG_HandleTypeDef *hjpeg, uint8_t *pDataOut, u
   } else {
     JPEG_EncodeOutputResume();
   }
-
-//  JPEG_ImgSize = OutDataLength;
-//
-//  Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
-//  Jpeg_OUT_BufferTab.DataBufferSize = 0;
-//
-//  if(Output_Is_Paused == 1)
-//  {
-//    Output_Is_Paused = 0;
-//    //HAL_JPEG_Resume(pJpeg, JPEG_PAUSE_RESUME_OUTPUT);
-//  }
-
-//  if(HAL_UART_Transmit_DMA(pHuart, Jpeg_OUT_BufferTab.DataBuffer, Jpeg_OUT_BufferTab.DataBufferSize)!= HAL_OK)
-//  {
-//    NVIC_SystemReset();
-//    // Transfer error in transmission process
-//    Error_Handler();
-//  }
 }
 
 void JPEG_EncodeOutputResume()
@@ -276,26 +252,6 @@ void JPEG_EncodeOutputResume()
     HAL_JPEG_Resume(pJpeg, JPEG_PAUSE_RESUME_OUTPUT);
   }
 }
-
-//void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-//{
-//  if(Jpeg_OUT_BufferTab.State == JPEG_BUFFER_FULL)
-//  {
-//    Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
-//    Jpeg_OUT_BufferTab.DataBufferSize = 0;
-//
-//    if(Output_Is_Paused == 1)
-//    {
-//      Output_Is_Paused = 0;
-//      HAL_JPEG_Resume(pJpeg, JPEG_PAUSE_RESUME_OUTPUT);
-//    }
-//  }
-//
-//  if(Jpeg_HWEncodingEnd != 0)
-//  {
-//    HAL_UART_Transmit(huart, (uint8_t*)"*RDY*", 5, 100);
-//  }
-//}
 
 /**
   * @brief  JPEG Error callback
@@ -316,30 +272,11 @@ void HAL_JPEG_EncodeCpltCallback(JPEG_HandleTypeDef *hjpeg)
 {
   Jpeg_HWEncodingEnd = 1;
 
-  /* Release the RTP Send semaphore */
-
-//  BaseType_t xHigherPriorityTaskWoken;
-//
-//  /* The xHigherPriorityTaskWoken parameter must be initialized
-//  to pdFALSE as it will get set to pdTRUE inside the interrupt
-//  safe API function if calling the API function unblocks a task
-//  that has a higher priority than the task in the running state
-//  (the task this ISR interrupted). */
-//  xHigherPriorityTaskWoken = pdFALSE;
-//
-//  /* Send a notification directly to the task that will perform
-//  any processing necessitated by this interrupt. */
-//  vTaskNotifyGiveFromISR( /* The handle of the task to which
-//                          the notification is being sent. */
-//                          wsPicTaskHandle,
-//                          &xHigherPriorityTaskWoken );
-//
-//  /* If xHigherPriorityTaskWoken is now pdTRUE then calling
-//  portYIELD_FROM_ISR() will result in a context switch, and
-//  this interrupt will return directly to the unblocked task.
-//  The FAQ “why is there a separate API for use in interrupts”
-//  describes why it is done this way. */
-//  portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+  if (simDCMItaskHandle) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    vTaskNotifyGiveFromISR(simDCMItaskHandle, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+  }
 }
 
 /**

@@ -108,6 +108,7 @@ void StartSimDCMItask(void const * argument)
         break;
       }
     }
+    ws_server_send_text_all("E", 1);
 //    osDelay(5000);
 //    HAL_Delay(5000);
   }
@@ -125,10 +126,6 @@ void wsPicTask(void const * argument)
       int ret = ws_server_send_bin_all((char*)JPEG_buffer, len);
       if (ret == 0) break;
       JPEG_EncodeOutputResume();
-      if (len != JPEG_BUFFER_SIZE) {
-        ws_server_send_text_all("E", 1);
-        xTaskNotifyGive(simDCMItaskHandle);
-      }
     }
   }
   osThreadTerminate(NULL);
