@@ -121,11 +121,10 @@ uint8_t JPEG_buffer2[JPEG_BUFFER_SIZE];
 
 void wsPicTask(void const * argument)
 {
-  uint32_t len = 0;
   for (;;) {
-    if( xTaskNotifyWait( 0, 0, &len, 1000 ) != 0 )
+    if( ulTaskNotifyTake( pdFALSE, 1000 ) != 0 )
     {
-      int ret = ws_server_send_bin_all((char*)JPEG_buffer, len);
+      int ret = ws_server_send_bin_all((char*)buffCAM, FRAME_SIZE_HEIGHT * FRAME_SIZE_WIDTH * 2);
       if (ret == 0) break;
       JPEG_EncodeOutputResume();
     }
@@ -144,10 +143,7 @@ void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len
 //        simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
         ov7670_init(&hdcmi, &hi2c2);
         osDelay(100);
-        HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
-
-        osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
-        wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
+        HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_SNAPSHOT, (uint32_t)&buffCAM, FRAME_SIZE_HEIGHT * FRAME_SIZE_WIDTH * 2 / 4);
       }
       break;
     case WEBSOCKET_DISCONNECT_EXTERNAL:
@@ -340,6 +336,9 @@ void MX_LWIP_Init(void)
 
   osThreadDef(server_task, server_task, osPriorityAboveNormal, 0, configMINIMAL_STACK_SIZE * 4);
   osThreadCreate(osThread(server_task), NULL);
+
+  osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
+  wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
 
   httpd_init();
 /* USER CODE END 3 */

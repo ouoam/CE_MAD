@@ -56,7 +56,8 @@ extern osThreadId wsPicTaskHandle;
 extern osThreadId simDCMItaskHandle;
 
 uint8_t MCU_Data_IntBuffer0[CHUNK_SIZE_IN];
-uint8_t JPEG_buffer[CHUNK_SIZE_OUT] __attribute__((section(".JPEGSection")));
+//uint8_t JPEG_buffer[CHUNK_SIZE_OUT] __attribute__((section(".JPEGSection")));
+uint8_t JPEG_buffer[CHUNK_SIZE_OUT];
 
 uint32_t JPEG_ImgSize;
 

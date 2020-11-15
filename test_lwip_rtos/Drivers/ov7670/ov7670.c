@@ -51,7 +51,7 @@ static struct regval_list ov7670_default_regs[] = {
     {TSLB, 0x04}, 
     
   //  /* Frame rate 30 fps at 12 Mhz clock */    
-	{CLKRC, 0x0F},  // 00->15 01->7.5 02->5 03->3.75 04->3 05->2.5 06->2.14
+	{CLKRC, 0x1F},  // 00->15 01->7.5 02->5 03->3.75 04->3 05->2.5 06->2.14
 	{DBLV,  0x3A},  
 
     {COM10, COM10_VSYNC_NEG | COM10_PCLK_MASK},
@@ -487,7 +487,7 @@ HAL_StatusTypeDef ov7670_init(DCMI_HandleTypeDef *p_hdcmi, I2C_HandleTypeDef *p_
   printf("[OV7670] pid = %02X\r\n", SCCB_Read(REG_PID));
 	printf("[OV7670] ver = %02X\r\n", SCCB_Read(REG_VER));
 	
-	set_framesize(FRAMESIZE_QQVGA);
+	set_framesize(FRAME_SIZE);
 	set_pixformat(PIXFORMAT_YUV422);
 
 	/*

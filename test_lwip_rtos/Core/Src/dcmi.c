@@ -200,18 +200,30 @@ void HAL_DCMI_MspDeInit(DCMI_HandleTypeDef* dcmiHandle)
 }
 
 /* USER CODE BEGIN 1 */
-uint8_t buffCAM[MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2];
+uint8_t buffCAM[FRAME_SIZE_HEIGHT * FRAME_SIZE_WIDTH * 2];
 uint8_t MCU_Data_IntBuffer1[CHUNK_SIZE_IN];
 uint32_t line = 0;
+
+
+extern osThreadId wsPicTaskHandle;
 
 void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
   line = 0;
-  //while (JPEG_EncodeOutputHandler(&hjpeg) == 0);
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  vTaskNotifyGiveFromISR(wsPicTaskHandle, &xHigherPriorityTaskWoken);
+  portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
 void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
+  line++;
+//  if (wsPicTaskHandle && line % 4 == 0) {
+//    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+//    xTaskNotifyFromISR( wsPicTaskHandle, line, eSetValueWithoutOverwrite, &xHigherPriorityTaskWoken );
+//    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+//  }
+  /*
   uint32_t lineMod = line&0x07;
 
   // convent data from dcmi to JPEG MCU for encode
@@ -249,6 +261,8 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
   }
 
   line++;
+  */
+
 }
 
 /* USER CODE END 1 */

@@ -123,9 +123,9 @@ int map(int st1, int fn1, int st2, int fn2, int value);
 #define RES_QQVGA_W   ( RES_QVGA_W / 2 )  // 160
 #define RES_QQVGA_H   ( RES_QVGA_H / 2 )  // 120
 
-//#define FRAME_SIZE        (FRAMESIZE_QVGA)
-#define FRAME_SIZE_WIDTH  (RES_VGA_W)
-#define FRAME_SIZE_HEIGHT (RES_VGA_H)
+#define FRAME_SIZE        (FRAMESIZE_QQVGA)
+#define FRAME_SIZE_WIDTH  (RES_QQVGA_W)
+#define FRAME_SIZE_HEIGHT (RES_QQVGA_H)
 
 #define JPEG_CHROMA_SAMPLING     JPEG_422_SUBSAMPLING   /* Select Chroma Sampling: JPEG_420_SUBSAMPLING, JPEG_422_SUBSAMPLING, JPEG_444_SUBSAMPLING   */
 #define JPEG_COLOR_SPACE         JPEG_YCBCR_COLORSPACE  /* Select Color Space: JPEG_YCBCR_COLORSPACE, JPEG_GRAYSCALE_COLORSPACE, JPEG_CMYK_COLORSPACE */
@@ -133,7 +133,7 @@ int map(int st1, int fn1, int st2, int fn2, int value);
 #define MAX_INPUT_WIDTH          800                    /* Set the Maximum of RGB input images Width to be encoded */
 #define MAX_INPUT_LINES          8                      /* Set Input buffer lines to 16 for YCbCr420, and 8 for YCbCr422 and YCbCr444 (to save RAM space) */
 
-#define JPEG_BUFFER_SIZE         (1400)
+#define JPEG_BUFFER_SIZE         (16*1024)
 
 /* USER CODE END Private defines */
 
