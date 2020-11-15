@@ -122,16 +122,16 @@ void wsPicTask(void const * argument)
   for (;;) {
     if( xTaskNotifyWait( 0, 0, &len, 1000 ) != 0 )
     {
-      ws_server_send_bin_all((char*)JPEG_buffer, len);
+      int ret = ws_server_send_bin_all((char*)JPEG_buffer, len);
+      if (ret == 0) break;
       JPEG_EncodeOutputResume();
       if (len != JPEG_BUFFER_SIZE) {
         ws_server_send_text_all("E", 1);
-        osDelay(10);
         xTaskNotifyGive(simDCMItaskHandle);
       }
-
     }
   }
+  osThreadTerminate(NULL);
 }
 
 // handles websocket events

@@ -82,17 +82,14 @@ typedef struct {
   uint8_t contin_text;     // is the continue a binary or text?
   uint64_t len;         // length of continuation
   uint32_t unfinished;      // sometimes netconn doesn't read a full frame, treated similarly to a continuation frame
-  void (*ccallback)(WEBSOCKET_TYPE_t type,char* msg,uint64_t len); // client callback
   void (*scallback)(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len); // server callback
 } ws_client_t;
 
 // returns the populated client struct
 // does not send any header, assumes the proper handshake has already occurred
-// ccallback = callback for client (userspace)
 // scallback = callback for server (userspace)
 ws_client_t ws_connect_client(struct netconn* conn,
                               char* url,
-                              void (*ccallback)(WEBSOCKET_TYPE_t type,char* msg,uint64_t len),
                               void (*scallback)(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len)
                              );
 void ws_disconnect_client(ws_client_t* client,uint8_t mask);

@@ -25,7 +25,6 @@ This program is free software: you can redistribute it and/or modify
 
 ws_client_t ws_connect_client(struct netconn* conn,
                               char* url,
-                              void (*ccallback)(WEBSOCKET_TYPE_t type,char* msg,uint64_t len),
                               void (*scallback)(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len)
                             ) {
   ws_client_t client;
@@ -36,7 +35,6 @@ ws_client_t ws_connect_client(struct netconn* conn,
   client.contin = NULL;
   client.len = 0;
   client.unfinished = 0;
-  client.ccallback = ccallback;
   client.scallback = scallback;
   return client;
 }
@@ -56,7 +54,6 @@ void ws_disconnect_client(ws_client_t* client,uint8_t mask) {
       free(client->contin);
     client->len = 0;
   }
-  client->ccallback = NULL;
   client->scallback = NULL;
 }
 
