@@ -105,6 +105,8 @@
 #define LWIP_USE_EXTERNAL_MBEDTLS 1
 /*----- Default Value for LWIP_HTTPD: 0 ---*/
 #define LWIP_HTTPD 1
+/*----- Default Value for LWIP_HTTPD_DYNAMIC_HEADERS: 0 ---*/
+#define LWIP_HTTPD_DYNAMIC_HEADERS 1
 /*----- Value in opt.h for HTTPD_USE_CUSTOM_FSDATA: 0 -----*/
 #define HTTPD_USE_CUSTOM_FSDATA 1
 /*----- Value in opt.h for LWIP_STATS: 1 -----*/
@@ -129,23 +131,10 @@
 #define CHECKSUM_CHECK_ICMP 0
 /*----- Value in opt.h for CHECKSUM_CHECK_ICMP6: 1 -----*/
 #define CHECKSUM_CHECK_ICMP6 0
-/*----- Default Value for API_MSG_DEBUG: LWIP_DBG_OFF ---*/
-#define API_MSG_DEBUG LWIP_DBG_ON
-/*----- Default Value for SYS_DEBUG: LWIP_DBG_OFF ---*/
-#define SYS_DEBUG LWIP_DBG_ON
+/*----- Default Value for LWIP_DBG_TYPES_ON: LWIP_DBG_ON ---*/
+#define LWIP_DBG_TYPES_ON LWIP_DBG_OFF
 /*-----------------------------------------------------------------------------*/
 /* USER CODE BEGIN 1 */
-#define LWIP_NETCONN 1
-#define LWIP_SOCKET 1
-
-#define LWIP_DEBUG                      1
-
-#define LWIP_DBG_TYPES_ON    (LWIP_DBG_ON | LWIP_DBG_TRACE)
-
-#define LWIP_TCP 1
-
-#define LWIP_HTTPD_DYNAMIC_HEADERS 1
-
 #define lwip_strnstr strnstr
 #define lwip_stricmp stricmp
 #define lwip_strnicmp strnicmp
