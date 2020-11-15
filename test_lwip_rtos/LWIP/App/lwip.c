@@ -379,7 +379,7 @@ void MX_LWIP_Init(void)
 //    StartSimDCMItask(NULL);
 //  }
 
-  //httpd_init();
+  httpd_init();
 /* USER CODE END 3 */
 }
 
