@@ -22,6 +22,8 @@
 #include "cmsis_os.h"
 #include "dcmi.h"
 #include "dma.h"
+#include "i2c.h"
+#include "i2s.h"
 #include "jpeg.h"
 #include "mbedtls.h"
 #include "tim.h"
@@ -29,7 +31,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ov7670.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -127,6 +129,8 @@ int main(void)
   MX_MBEDTLS_Init();
   MX_TIM11_Init();
   MX_TIM14_Init();
+  MX_I2C2_Init();
+  MX_I2S3_Init();
   /* USER CODE BEGIN 2 */
   __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, map(0,180,50,250,250));
   __HAL_TIM_SET_COMPARE(&htim14, TIM_CHANNEL_1, map(0,180,50,250,230));
@@ -160,6 +164,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
   /** Configure LSE Drive Capability
   */
@@ -202,6 +207,20 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_PLLI2S|RCC_PERIPHCLK_I2C2
+                              |RCC_PERIPHCLK_I2S;
+  PeriphClkInitStruct.PLLI2S.PLLI2SN = 144;
+  PeriphClkInitStruct.PLLI2S.PLLI2SP = RCC_PLLP_DIV2;
+  PeriphClkInitStruct.PLLI2S.PLLI2SR = 6;
+  PeriphClkInitStruct.PLLI2S.PLLI2SQ = 2;
+  PeriphClkInitStruct.PLLI2SDivQ = 1;
+  PeriphClkInitStruct.I2sClockSelection = RCC_I2SCLKSOURCE_PLLI2S;
+  PeriphClkInitStruct.I2c2ClockSelection = RCC_I2C2CLKSOURCE_PCLK1;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_PLLI2SCLK, RCC_MCODIV_4);
 }
 
 /* USER CODE BEGIN 4 */

@@ -34,6 +34,7 @@
 #include "lwip/apps/httpd.h"
 
 #include "encode_dma.h"
+#include "ov7670.h"
 
 #include "websocket_server.h"
 /* USER CODE END 0 */
@@ -49,8 +50,9 @@ extern TIM_HandleTypeDef htim11;
 extern TIM_HandleTypeDef htim14;
 
 extern uint8_t buffCAM[MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2];
-extern DCMI_HandleTypeDef hdcmi;
 extern uint8_t JPEG_buffer[JPEG_BUFFER_SIZE];
+extern DCMI_HandleTypeDef hdcmi;
+extern I2C_HandleTypeDef hi2c2;
 
 /* USER CODE END 1 */
 /* Semaphore to signal Ethernet Link state update */
@@ -89,9 +91,9 @@ void StartSimDCMItask(void const * argument)
         startF = (uint32_t*)buffCAM;
       }
       for (uint32_t j = 0; j < 0xFF00; j+=(0xFF00/(FRAME_SIZE_WIDTH*2/4))) {
-        //*startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
+        *startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
         //*startF++ = round;
-        *startF++ = (j & 0xFF00) | (i & 0xFF000000);
+        //*startF++ = (j & 0xFF00) | (i & 0xFF000000);
         //*startF++ = 0x007F007F00 | (j & 0xFF00) | (i & 0xFF000000);
       }
       //printf("Sim Line\r\n");
@@ -138,8 +140,11 @@ void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len
   switch(type) {
     case WEBSOCKET_CONNECT:
       {
-        osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
-        simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
+//        osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
+//        simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
+        ov7670_init(&hdcmi, &hi2c2);
+        osDelay(100);
+        HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
 
         osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
         wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
@@ -161,8 +166,8 @@ void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len
     case WEBSOCKET_TEXT:
       if(len) { // if the message length was greater than zero
         if(len == 1) {
-          static int8_t ch11=9;
-          static int8_t ch14=9;
+          static int8_t ch11=25;
+          static int8_t ch14=23;
 
           switch(msg[0]) {
             case 'w': ch11++; break;

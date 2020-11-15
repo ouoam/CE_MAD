@@ -41,7 +41,7 @@ void MX_DCMI_Init(void)
 
   hdcmi.Instance = DCMI;
   hdcmi.Init.SynchroMode = DCMI_SYNCHRO_HARDWARE;
-  hdcmi.Init.PCKPolarity = DCMI_PCKPOLARITY_FALLING;
+  hdcmi.Init.PCKPolarity = DCMI_PCKPOLARITY_RISING;
   hdcmi.Init.VSPolarity = DCMI_VSPOLARITY_HIGH;
   hdcmi.Init.HSPolarity = DCMI_HSPOLARITY_LOW;
   hdcmi.Init.CaptureRate = DCMI_CR_ALL_FRAME;
@@ -207,7 +207,7 @@ uint32_t line = 0;
 void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
   line = 0;
-  while (JPEG_EncodeOutputHandler(&hjpeg) == 0);
+  //while (JPEG_EncodeOutputHandler(&hjpeg) == 0);
 }
 
 void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
@@ -243,7 +243,7 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
       JPEG_Encode_DMA(&hjpeg, (uint8_t*)MCU_Data_IntBuffer1, RGB_IMAGE_SIZE);
     } else {
       while (!JPEG_EncodeInputHandler(&hjpeg)){
-        osDelay(1);
+        //osDelay(1);
       }
     }
   }

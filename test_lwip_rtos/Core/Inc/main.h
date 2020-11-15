@@ -78,6 +78,10 @@ int map(int st1, int fn1, int st2, int fn2, int value);
 #define RMII_RXD1_GPIO_Port GPIOC
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
+#define CAM_RESET_Pin GPIO_PIN_0
+#define CAM_RESET_GPIO_Port GPIOG
+#define CAM_PWDN_Pin GPIO_PIN_1
+#define CAM_PWDN_GPIO_Port GPIOG
 #define RMII_TXD1_Pin GPIO_PIN_13
 #define RMII_TXD1_GPIO_Port GPIOB
 #define LD3_Pin GPIO_PIN_14

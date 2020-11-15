@@ -68,6 +68,7 @@ websocket.onmessage = function(evt) {
 	}
   } else {
     out = _appendBuffer(out, evt.data);
+    //document.getElementById('pic').src = "data:image/jpeg;base64," + _arrayBufferToBase64(out);
   }
 }
 
