@@ -37,11 +37,12 @@ _Min_Stack_Size = 0x400 ;	/* required amount of stack */
 MEMORY
 {
   FLASH     (rx)   : ORIGIN = 0x8000000,  LENGTH = 2048K
-  RAM      (xrw)   : ORIGIN = 0x20000000, LENGTH = 0x7c000
+  RAM      (xrw)   : ORIGIN = 0x20000000, LENGTH = 0x7B800
   Memory_B1(xrw)   : ORIGIN = 0x2007C000, LENGTH = 0x80
   Memory_B2(xrw)   : ORIGIN = 0x2007C080, LENGTH = 0x80
   Memory_B3(xrw)   : ORIGIN = 0x2007C100, LENGTH = 0x17d0 
   Memory_B4(xrw)   : ORIGIN = 0x2007D8D0, LENGTH = 0x17d0
+  Memory_B5(xrw)   : ORIGIN = 0x2007B800, LENGTH = 0x800
 }
 
 /* Sections */
@@ -180,4 +181,5 @@ SECTIONS
   .TxDescripSection (NOLOAD) : { *(.DMATxDscrTab_section) } >Memory_B2
   .RxarraySection (NOLOAD) : { *(.RxBUF) } >Memory_B3
   .TxarraySection (NOLOAD) : { *(.TxBUF) } >Memory_B4 
+  .JPEGSection (NOLOAD) : { *(.JPEG) } >Memory_B5 
 }

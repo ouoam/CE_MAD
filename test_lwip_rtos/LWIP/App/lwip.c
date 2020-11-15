@@ -100,12 +100,12 @@ void StartSimDCMItask(void const * argument)
     HAL_DCMI_FrameEventCallback(&hdcmi);
     round+=(4) | (4<<16);
     round&=0xFF| (0xFF<<16);
-//    while (1) {
-//      if( ulTaskNotifyTake( pdFALSE, 1000 ) != 0 ) {
-//        break;
-//      }
-//    }
-    osDelay(5000);
+    while (1) {
+      if( ulTaskNotifyTake( pdFALSE, 1000 ) != 0 ) {
+        break;
+      }
+    }
+//    osDelay(5000);
 //    HAL_Delay(5000);
   }
   /* USER CODE END StartSimDCMItask */
@@ -122,8 +122,8 @@ void wsPicTask(void const * argument)
       ws_server_send_bin_all((char*)JPEG_buffer, len);
       JPEG_EncodeOutputResume();
       if (len != JPEG_BUFFER_SIZE) {
-        osDelay(100000);
         ws_server_send_text_all("E", 1);
+        osDelay(10);
         xTaskNotifyGive(simDCMItaskHandle);
       }
 
@@ -138,10 +138,10 @@ void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len
   switch(type) {
     case WEBSOCKET_CONNECT:
       {
-        osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
+        osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 8);
         simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
 
-        osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
+        osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 8);
         wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
       }
       break;
@@ -156,6 +156,7 @@ void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len
       //ESP_LOGI(TAG,"client %i was disconnected due to an error",num);
       //led_duty(0);
       osThreadTerminate(simDCMItaskHandle);
+      osThreadTerminate(wsPicTaskHandle);
       break;
     case WEBSOCKET_TEXT:
       if(len) { // if the message length was greater than zero
@@ -357,16 +358,16 @@ void MX_LWIP_Init(void)
 
 //  websocket_register_callbacks((tWsOpenHandler) websocket_open_cb, (tWsHandler) websocket_cb);
 
-//  ws_server_start();
+  ws_server_start();
 ////  xTaskCreate(&server_task,"server_task",3000,NULL,5,NULL);
 ////  xTaskCreate(&server_handle_task,"server_handle_task",4000,NULL,6,NULL);
 //  //xTaskCreate(&count_task,"count_task",6000,NULL,2,NULL);
-//
-//  osThreadDef(server_task, server_task, osPriorityAboveNormal, 0, 3000);
-//  osThreadCreate(osThread(server_task), NULL);
-//
-//  osThreadDef(server_handle_task, server_handle_task, osPriorityAboveNormal, 0, 4000);
-//  osThreadCreate(osThread(server_handle_task), NULL);
+
+  osThreadDef(server_task, server_task, osPriorityAboveNormal, 0, 3000);
+  osThreadCreate(osThread(server_task), NULL);
+
+  osThreadDef(server_handle_task, server_handle_task, osPriorityAboveNormal, 0, 4000);
+  osThreadCreate(osThread(server_handle_task), NULL);
 
 //  osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
 //  simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
@@ -374,9 +375,9 @@ void MX_LWIP_Init(void)
 //  osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
 //  wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
 
-  for (;;) {
-    StartSimDCMItask(NULL);
-  }
+//  for (;;) {
+//    StartSimDCMItask(NULL);
+//  }
 
   //httpd_init();
 /* USER CODE END 3 */
