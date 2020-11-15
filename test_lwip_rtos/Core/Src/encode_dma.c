@@ -20,7 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "encode_dma.h"
-#include "rtp_protocol.h"
+#include "lwip.h"
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
 /** @addtogroup STM32F7xx_HAL_Examples
@@ -44,17 +44,15 @@ typedef struct
 #define BYTES_PER_PIXEL    2
 
 #define CHUNK_SIZE_IN   ((uint32_t)(MAX_INPUT_WIDTH * BYTES_PER_PIXEL * MAX_INPUT_LINES))
-#define CHUNK_SIZE_OUT  RTP_PAYLOAD_SIZE_MAX
+#define CHUNK_SIZE_OUT  JPEG_BUFFER_SIZE
 
 #define JPEG_BUFFER_EMPTY       0
 #define JPEG_BUFFER_FULL        1
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-// JPEG_RGBToYCbCr_Convert_Function pRGBToYCbCr_Convert_Function;
 
-extern osSemaphoreId RTP_SendSemaphoreHandle;
-extern osThreadId Thr_Send_Sem;
+extern osThreadId wsPicTaskHandle;
 
 uint8_t MCU_Data_IntBuffer0[CHUNK_SIZE_IN];
 uint8_t JPEG_buffer[CHUNK_SIZE_OUT];
@@ -74,7 +72,6 @@ __IO uint32_t Output_Is_Paused      = 0;
 __IO uint32_t Input_Is_Paused       = 0;
 
 JPEG_ConfTypeDef Conf;
-//UART_HandleTypeDef *pHuart;
 JPEG_HandleTypeDef *pJpeg;
 
 uint32_t RGB_InputImageIndex;
@@ -91,7 +88,6 @@ uint8_t *RGB_InputImageAddress;
   * @param  DestAddress : ARGB destination Frame Buffer Address.
   * @retval None
   */
-//uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint8_t *RGBImageBufferAddress, uint32_t RGBImageSize_Bytes, UART_HandleTypeDef *huart)
 uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint8_t *RGBImageBufferAddress, uint32_t RGBImageSize_Bytes)
 {
   //pHuart = huart;
@@ -107,7 +103,6 @@ uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint8_t *RGBImageBufferAddre
 
   /* Get RGB Info */
   RGB_GetInfo(&Conf);
-  // JPEG_GetEncodeColorConvertFunc(&Conf, &pRGBToYCbCr_Convert_Function, &MCU_TotalNb);
 
   uint32_t hMCU = (Conf.ImageWidth / 16);
   uint32_t vMCU = (Conf.ImageHeight / 8);
@@ -126,14 +121,8 @@ uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint8_t *RGBImageBufferAddre
 
   if(RGB_InputImageIndex < RGB_InputImageSize_Bytes)
   {
-    /* Pre-Processing */
-    //MCU_BlockIndex += pRGBToYCbCr_Convert_Function((uint8_t *)(RGB_InputImageAddress + RGB_InputImageIndex), Jpeg_IN_BufferTab.DataBuffer, 0, DataBufferSize,(uint32_t*)(&Jpeg_IN_BufferTab.DataBufferSize));
-
     MCU_BlockIndex += Conf.ImageWidth / 16;
     Jpeg_IN_BufferTab.DataBufferSize = Conf.ImageWidth * MAX_INPUT_LINES * BYTES_PER_PIXEL;
-//    for (int i = 0; i < DataBufferSize; i++) {
-//      Jpeg_IN_BufferTab.DataBuffer[i] = RGB_InputImageAddress[i];
-//    }
     Jpeg_IN_BufferTab.DataBuffer = RGB_InputImageAddress;
 
     Jpeg_IN_BufferTab.State = JPEG_BUFFER_FULL;
@@ -141,12 +130,17 @@ uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint8_t *RGBImageBufferAddre
     RGB_InputImageIndex += DataBufferSize;
   }
 
+  taskENTER_CRITICAL();
+  {
+
   /* Fill Encoding Params */
   HAL_JPEG_ConfigEncoding(hjpeg, &Conf);
 
   /* Start JPEG encoding with DMA method */
   HAL_JPEG_Encode_DMA(hjpeg, Jpeg_IN_BufferTab.DataBuffer, Jpeg_IN_BufferTab.DataBufferSize, Jpeg_OUT_BufferTab.DataBuffer, CHUNK_SIZE_OUT);
 
+  }
+  taskEXIT_CRITICAL();
   return 0;
 }
 
@@ -250,9 +244,13 @@ void HAL_JPEG_DataReadyCallback (JPEG_HandleTypeDef *hjpeg, uint8_t *pDataOut, u
 
   HAL_JPEG_ConfigOutputBuffer(hjpeg, Jpeg_OUT_BufferTab.DataBuffer, CHUNK_SIZE_OUT);
 
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-  xTaskNotifyFromISR( Thr_Send_Sem, OutDataLength, eSetValueWithoutOverwrite, &xHigherPriorityTaskWoken );
-  portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+  if (wsPicTaskHandle) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xTaskNotifyFromISR( wsPicTaskHandle, OutDataLength, eSetValueWithoutOverwrite, &xHigherPriorityTaskWoken );
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+  } else {
+    JPEG_EncodeOutputResume();
+  }
 
 //  JPEG_ImgSize = OutDataLength;
 //
@@ -325,7 +323,6 @@ void HAL_JPEG_EncodeCpltCallback(JPEG_HandleTypeDef *hjpeg)
   Jpeg_HWEncodingEnd = 1;
 
   /* Release the RTP Send semaphore */
-  //osSemaphoreRelease(RTP_SendSemaphoreHandle);
 
 //  BaseType_t xHigherPriorityTaskWoken;
 //
@@ -340,7 +337,7 @@ void HAL_JPEG_EncodeCpltCallback(JPEG_HandleTypeDef *hjpeg)
 //  any processing necessitated by this interrupt. */
 //  vTaskNotifyGiveFromISR( /* The handle of the task to which
 //                          the notification is being sent. */
-//                          Thr_Send_Sem,
+//                          wsPicTaskHandle,
 //                          &xHigherPriorityTaskWoken );
 //
 //  /* If xHigherPriorityTaskWoken is now pdTRUE then calling

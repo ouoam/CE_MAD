@@ -38,6 +38,17 @@ void Error_Handler(void);
 /* USER CODE BEGIN 1 */
 osThreadId simDCMItaskHandle;
 osThreadId webSocketTaskHandle;
+osThreadId wsPicTaskHandle;
+
+extern TIM_HandleTypeDef htim11;
+extern TIM_HandleTypeDef htim14;
+
+extern uint8_t buffCAM[MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2];
+extern DCMI_HandleTypeDef hdcmi;
+extern uint8_t JPEG_buffer[JPEG_BUFFER_SIZE];
+
+static QueueHandle_t client_queue;
+const static int client_queue_size = 10;
 /* USER CODE END 1 */
 /* Semaphore to signal Ethernet Link state update */
 osSemaphoreId Netif_LinkSemaphore = NULL;
@@ -51,6 +62,71 @@ ip4_addr_t netmask;
 ip4_addr_t gw;
 
 /* USER CODE BEGIN 2 */
+
+/**
+* @brief Function implementing the simDCMItask thread.
+* @param argument: Not used
+* @retval None
+*/
+void StartSimDCMItask(void const * argument)
+{
+  printf("StartSimDCMItask\r\n");
+  /* USER CODE BEGIN StartSimDCMItask */
+  uint32_t round = 0;
+  /* Infinite loop */
+  for(;;)
+  {
+    //printf("Sim Start\r\n");
+    uint32_t *startF = (uint32_t*)buffCAM;
+    for (uint32_t i = 0; i < 0xFF000000; i+=(0xFF000000/FRAME_SIZE_HEIGHT)) {
+      if (i % ((0xFF000000/FRAME_SIZE_HEIGHT) *8) == 0) {
+        startF = (uint32_t*)buffCAM;
+      }
+      for (uint32_t j = 0; j < 0xFF00; j+=(0xFF00/(FRAME_SIZE_WIDTH*2/4))) {
+        *startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
+        //*startF++ = 0x007F007F00 | (j & 0xFF00) | (i & 0xFF000000);
+      }
+      //printf("Sim Line\r\n");
+      HAL_DCMI_LineEventCallback(&hdcmi);
+      //HAL_Delay(1000/FRAME_SIZE_HEIGHT);
+//      HAL_Delay(500);
+    }
+    //printf("Sim Frame\r\n");
+    HAL_DCMI_FrameEventCallback(&hdcmi);
+    round+=(4) | (4<<16);
+    round&=0xFF| (0xFF<<16);
+//    while (1) {
+//      if( ulTaskNotifyTake( pdFALSE, 1000 ) != 0 ) {
+//        break;
+//      }
+//    }
+    osDelay(5000);
+//    HAL_Delay(5000);
+  }
+  /* USER CODE END StartSimDCMItask */
+}
+
+uint8_t JPEG_buffer2[JPEG_BUFFER_SIZE];
+
+//void wsPicTask(void const * argument)
+//{
+//  uint32_t len = 0;
+//  for (;;) {
+//    if( xTaskNotifyWait( 0, 0, &len, 1000 ) != 0 )
+//    {
+//      //ws_server_send_bin_all((char*)JPEG_buffer, len);
+//      websocket_write(pcb, data, data_len, WS_BIN_MODE);
+//      JPEG_EncodeOutputResume();
+//      if (len != JPEG_BUFFER_SIZE) {
+//        osDelay(100000);
+//        //ws_server_send_text_all("E", 1);
+//        websocket_write(pcb, "E", 1, WS_TEXT_MODE);
+//        xTaskNotifyGive(simDCMItaskHandle);
+//      }
+//
+//    }
+//  }
+//}
 
 void websocket_task(void const * argument)
 {
@@ -163,6 +239,12 @@ void MX_LWIP_Init(void)
 
   websocket_register_callbacks((tWsOpenHandler) websocket_open_cb, (tWsHandler) websocket_cb);
   httpd_init();
+
+  osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
+  simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
+
+//  osThreadDef(wsPic, wsPicTask, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 4);
+//  wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
 /* USER CODE END 3 */
 }
 

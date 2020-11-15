@@ -265,46 +265,5 @@ RTP_StatusTypeDef RTP_GetState(RTP_HandleTypeDef *RTP_struct_ptr)
 }
 
 
-/**
-* @brief Function implementing the simDCMItask thread.
-* @param argument: Not used
-* @retval None
-*/
-void StartSimDCMItask(void const * argument)
-{
-  printf("StartSimDCMItask\r\n");
-  /* USER CODE BEGIN StartSimDCMItask */
-  uint32_t round = 0;
-  /* Infinite loop */
-  for(;;)
-  {
-    //printf("Sim Start\r\n");
-    uint32_t *startF = (uint32_t*)buffCAM;
-    for (uint32_t i = 0; i < 0xFF000000; i+=(0xFF000000/FRAME_SIZE_HEIGHT)) {
-      if (i % ((0xFF000000/FRAME_SIZE_HEIGHT) *8) == 0) {
-        startF = (uint32_t*)buffCAM;
-      }
-      for (uint32_t j = 0; j < 0xFF00; j+=(0xFF00/(FRAME_SIZE_WIDTH*2/4))) {
-        *startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
-        //*startF++ = 0x007F007F00 | (j & 0xFF00) | (i & 0xFF000000);
-      }
-      //printf("Sim Line\r\n");
-      HAL_DCMI_LineEventCallback(&hdcmi);
-      //HAL_Delay(1000/FRAME_SIZE_HEIGHT);
-      //osDelay(5);
-    }
-    //printf("Sim Frame\r\n");
-    HAL_DCMI_FrameEventCallback(&hdcmi);
-    round+=(4) | (4<<16);
-    round&=0xFF| (0xFF<<16);
-    while (1) {
-      if( ulTaskNotifyTake( pdFALSE, 1000 ) != 0 ) {
-        break;
-      }
-    }
-    //osDelay(10);
-  }
-  /* USER CODE END StartSimDCMItask */
-}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
