@@ -79,6 +79,9 @@ uint32_t RGB_InputImageIndex;
 uint32_t RGB_InputImageSize_Bytes;
 uint8_t *RGB_InputImageAddress;
 
+MAILQUEUE_OBJ_t *pMail = 0;
+extern osMailQId qid_MailQueue;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -134,8 +137,10 @@ uint32_t JPEG_Encode_DMA(JPEG_HandleTypeDef *hjpeg, uint8_t *RGBImageBufferAddre
   /* Fill Encoding Params */
   HAL_JPEG_ConfigEncoding(hjpeg, &Conf);
 
+  pMail = osMailAlloc (qid_MailQueue, osWaitForever);
+
   /* Start JPEG encoding with DMA method */
-  HAL_JPEG_Encode_DMA(hjpeg, Jpeg_IN_BufferTab.DataBuffer, Jpeg_IN_BufferTab.DataBufferSize, Jpeg_OUT_BufferTab.DataBuffer, CHUNK_SIZE_OUT);
+  HAL_JPEG_Encode_DMA(hjpeg, Jpeg_IN_BufferTab.DataBuffer, Jpeg_IN_BufferTab.DataBufferSize, pMail->jpeg, CHUNK_SIZE_OUT);
   return 0;
 }
 
@@ -230,21 +235,27 @@ void HAL_JPEG_DataReadyCallback (JPEG_HandleTypeDef *hjpeg, uint8_t *pDataOut, u
   HAL_JPEG_Pause(hjpeg, JPEG_PAUSE_RESUME_OUTPUT);
   Output_Is_Paused = 1;
 
-  HAL_JPEG_ConfigOutputBuffer(hjpeg, Jpeg_OUT_BufferTab.DataBuffer, CHUNK_SIZE_OUT);
+  pMail->len = OutDataLength;
 
-  if (wsPicTaskHandle) {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xTaskNotifyFromISR( wsPicTaskHandle, OutDataLength, eSetValueWithoutOverwrite, &xHigherPriorityTaskWoken );
-    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
-  } else {
-    JPEG_EncodeOutputResume();
-  }
+  osMailPut (qid_MailQueue, pMail);
+
+//  if (wsPicTaskHandle) {
+//    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+//    xTaskNotifyFromISR( wsPicTaskHandle, OutDataLength, eSetValueWithoutOverwrite, &xHigherPriorityTaskWoken );
+//    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+//  } else {
+//    JPEG_EncodeOutputResume();
+//  }
 }
 
 void JPEG_EncodeOutputResume()
 {
   Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
   Jpeg_OUT_BufferTab.DataBufferSize = 0;
+
+  pMail = osMailAlloc(qid_MailQueue, osWaitForever);
+
+  HAL_JPEG_ConfigOutputBuffer(pJpeg, pMail->jpeg, CHUNK_SIZE_OUT);
 
   if(Output_Is_Paused == 1)
   {

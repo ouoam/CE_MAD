@@ -40,7 +40,10 @@
 #endif /* WITH_RTOS */
 
 /* USER CODE BEGIN 0 */
-
+ typedef struct {                                                // object data type
+   uint8_t jpeg[JPEG_BUFFER_SIZE];
+   uint16_t len;
+ } MAILQUEUE_OBJ_t;
 /* USER CODE END 0 */
 
 /* Global Variables ----------------------------------------------------------*/

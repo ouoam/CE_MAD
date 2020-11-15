@@ -54,6 +54,12 @@ extern uint8_t JPEG_buffer[JPEG_BUFFER_SIZE];
 extern DCMI_HandleTypeDef hdcmi;
 extern I2C_HandleTypeDef hi2c2;
 
+
+#define MAILQUEUE_OBJECTS      16                               // number of Message Queue Objects
+
+osMailQId qid_MailQueue;                                        // mail queue id
+osMailQDef (MailQueue, MAILQUEUE_OBJECTS, MAILQUEUE_OBJ_t);     // mail queue object
+
 /* USER CODE END 1 */
 /* Semaphore to signal Ethernet Link state update */
 osSemaphoreId Netif_LinkSemaphore = NULL;
@@ -121,13 +127,20 @@ uint8_t JPEG_buffer2[JPEG_BUFFER_SIZE];
 
 void wsPicTask(void const * argument)
 {
+  MAILQUEUE_OBJ_t  *pMail = 0;
   uint32_t len = 0;
+  osEvent evt;
   for (;;) {
-    if( xTaskNotifyWait( 0, 0, &len, 1000 ) != 0 )
-    {
-      int ret = ws_server_send_bin_all((char*)JPEG_buffer, len);
-      if (ret == 0) break;
-      JPEG_EncodeOutputResume();
+    evt = osMailGet (qid_MailQueue, osWaitForever);             // wait for mail
+    if (evt.status == osEventMail) {
+      pMail = evt.value.p;
+      if (pMail) {
+        int ret = ws_server_send_bin_all((char*)pMail->jpeg, pMail->len);
+        if (ret == 0) break;
+        JPEG_EncodeOutputResume();
+
+        osMailFree (qid_MailQueue, pMail);                      // free memory allocated for mail
+      }
     }
   }
   osThreadTerminate(NULL);
@@ -142,6 +155,8 @@ void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len
       {
 //        osThreadDef(simDCMI, StartSimDCMItask, osPriorityLow, 0, configMINIMAL_STACK_SIZE * 4);
 //        simDCMItaskHandle = osThreadCreate(osThread(simDCMI), NULL);
+        qid_MailQueue = osMailCreate (osMailQ(MailQueue), NULL);
+
         ov7670_init(&hdcmi, &hi2c2);
         osDelay(100);
         HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
@@ -342,6 +357,15 @@ void MX_LWIP_Init(void)
   osThreadCreate(osThread(server_task), NULL);
 
   httpd_init();
+
+  qid_MailQueue = osMailCreate (osMailQ(MailQueue), NULL);
+
+  ov7670_init(&hdcmi, &hi2c2);
+  osDelay(100);
+  HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
+
+  osThreadDef(wsPic, wsPicTask, osPriorityRealtime, 0, configMINIMAL_STACK_SIZE * 4);
+  wsPicTaskHandle = osThreadCreate(osThread(wsPic), NULL);
 /* USER CODE END 3 */
 }
 
