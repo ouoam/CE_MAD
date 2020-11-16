@@ -172,7 +172,7 @@ void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len
           }
 
           if (ch11 < 10) ch11 = 10;
-          if (ch11 > 30) ch11 = 30;
+          if (ch11 > 40) ch11 = 40;
           if (ch14 < 7) ch14 = 7;
           if (ch14 > 40) ch14 = 40;
 
