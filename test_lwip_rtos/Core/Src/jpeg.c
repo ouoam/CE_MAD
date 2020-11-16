@@ -61,7 +61,7 @@ void HAL_JPEG_MspInit(JPEG_HandleTypeDef* jpegHandle)
     hdma_jpeg_in.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
     hdma_jpeg_in.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_jpeg_in.Init.Mode = DMA_NORMAL;
-    hdma_jpeg_in.Init.Priority = DMA_PRIORITY_HIGH;
+    hdma_jpeg_in.Init.Priority = DMA_PRIORITY_MEDIUM;
     hdma_jpeg_in.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
     hdma_jpeg_in.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
     hdma_jpeg_in.Init.MemBurst = DMA_MBURST_INC4;
@@ -82,7 +82,7 @@ void HAL_JPEG_MspInit(JPEG_HandleTypeDef* jpegHandle)
     hdma_jpeg_out.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
     hdma_jpeg_out.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_jpeg_out.Init.Mode = DMA_NORMAL;
-    hdma_jpeg_out.Init.Priority = DMA_PRIORITY_HIGH;
+    hdma_jpeg_out.Init.Priority = DMA_PRIORITY_LOW;
     hdma_jpeg_out.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
     hdma_jpeg_out.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
     hdma_jpeg_out.Init.MemBurst = DMA_MBURST_INC4;

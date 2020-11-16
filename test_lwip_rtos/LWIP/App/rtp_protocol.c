@@ -48,6 +48,8 @@
 #include "rtp_protocol.h"
 #include "encode_dma.h"
 
+#include "ov7670.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -67,6 +69,7 @@ extern uint32_t JPEG_ImgSize;
 
 extern uint8_t buffCAM[MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2];
 extern DCMI_HandleTypeDef hdcmi;
+extern I2C_HandleTypeDef hi2c2;
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -114,8 +117,12 @@ void RTP_Init(void)
       /*Start the continuous mode of the camera */
       // BSP_CAMERA_ContinuousStart((uint8_t *)RGB_buffer);
       /* definition and creation of simDCMItask */
-      osThreadDef(simDCMItask, StartSimDCMItask, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
-      simDCMItaskHandle = osThreadCreate(osThread(simDCMItask), NULL);
+//      osThreadDef(simDCMItask, StartSimDCMItask, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
+//      simDCMItaskHandle = osThreadCreate(osThread(simDCMItask), NULL);
+
+      ov7670_init(&hdcmi, &hi2c2);
+      osDelay(100);
+      HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
 
       RTP_struct.rtp_data = (char *)JPEG_buffer;
       

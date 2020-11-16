@@ -57,7 +57,7 @@ extern osSemaphoreId RTP_SendSemaphoreHandle;
 extern osThreadId Thr_Send_Sem;
 
 uint8_t MCU_Data_IntBuffer0[CHUNK_SIZE_IN];
-uint8_t JPEG_buffer[CHUNK_SIZE_OUT];
+uint8_t JPEG_buffer[CHUNK_SIZE_OUT] __attribute__((section(".JPEGSection")));
 
 uint32_t JPEG_ImgSize;
 
