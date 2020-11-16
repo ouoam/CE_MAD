@@ -89,9 +89,9 @@ void StartSimDCMItask(void const * argument)
         startF = (uint32_t*)buffCAM;
       }
       for (uint32_t j = 0; j < 0xFF00; j+=(0xFF00/(FRAME_SIZE_WIDTH*2/4))) {
-        //*startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
+        *startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
         //*startF++ = round;
-        *startF++ = (j & 0xFF00) | (i & 0xFF000000);
+        //*startF++ = (j & 0xFF00) | (i & 0xFF000000);
         //*startF++ = 0x007F007F00 | (j & 0xFF00) | (i & 0xFF000000);
       }
       //printf("Sim Line\r\n");
@@ -161,8 +161,8 @@ void websocket_callback(uint8_t num,WEBSOCKET_TYPE_t type,char* msg,uint64_t len
     case WEBSOCKET_TEXT:
       if(len) { // if the message length was greater than zero
         if(len == 1) {
-          static int8_t ch11=9;
-          static int8_t ch14=9;
+          static int8_t ch11=25;
+          static int8_t ch14=23;
 
           switch(msg[0]) {
             case 'w': ch11++; break;
