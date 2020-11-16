@@ -79,15 +79,15 @@ void userFunction(uint8_t* pData, uint32_t pDataLength)
       if (f_open(&MyFile, name, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
       {
         /* Creation failed */
-        // uart_length = sprintf(uart_tx_buffer, "Cannot open %s file \r\n", name);
-        // HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
+         uart_length = sprintf(uart_tx_buffer, "Cannot open %s file \r\n", name);
+         HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
       }
       else
       {
-        // uart_length = sprintf(uart_tx_buffer, "file %s created \r\n", name);
-        // HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
+         uart_length = sprintf(uart_tx_buffer, "file %s created \r\n", name);
+         HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
         /*write message to the file. Use variable wtext, bytesWritten*/
         res = f_write(&MyFile, pData, pDataLength, &bytesWritten);
 
@@ -98,8 +98,8 @@ void userFunction(uint8_t* pData, uint32_t pDataLength)
         if ((bytesWritten == 0) || (res != FR_OK))
         {
           /*error during writing*/
-          // uart_length = sprintf(uart_tx_buffer, "write error \r\n");
-          // HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
+           uart_length = sprintf(uart_tx_buffer, "write error \r\n");
+           HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
           HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
           HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
         }
@@ -109,21 +109,21 @@ void userFunction(uint8_t* pData, uint32_t pDataLength)
           if (f_open(&MyFile, name, FA_READ) != FR_OK)
           {
             /*file open failure*/
-            // uart_length = sprintf(uart_tx_buffer, "Cannot open %s file for verify \r\n", name);
-            // HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
+             uart_length = sprintf(uart_tx_buffer, "Cannot open %s file for verify \r\n", name);
+             HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
             HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
             HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
           }
           else
           {
             /*Read file content. Use variable : rtext, bytesread*/
-            res = f_read(&MyFile, rtext, sizeof(rtext),&bytesread);
+            res = f_read(&MyFile, pData, pDataLength,&bytesread);
 
             if ((bytesread == 0) || (res != FR_OK))
             {
               /*read fail*/
-              // uart_length = sprintf(uart_tx_buffer, "Cannot read file for verification \r\n");
-              // HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
+               uart_length = sprintf(uart_tx_buffer, "Cannot read file for verification \r\n");
+               HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
               HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
               HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
             }
@@ -136,8 +136,8 @@ void userFunction(uint8_t* pData, uint32_t pDataLength)
             if (f_close(&MyFile) != FR_OK)
             {
               /*check number of written bytes*/
-              // uart_length = sprintf(uart_tx_buffer, "fclose fail \r\n");
-              // HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
+               uart_length = sprintf(uart_tx_buffer, "fclose fail \r\n");
+               HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
               HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
               HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
               while (1)
@@ -150,15 +150,15 @@ void userFunction(uint8_t* pData, uint32_t pDataLength)
           if ((bytesread == bytesWritten))
           {
             /*verification success full - number of written bytes is equal to number of read bytes*/
-            // uart_length = sprintf(uart_tx_buffer, "verification OK - read number of bytes is equal to written number of bytes \r\n");
-            // HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, ((uint16_t)uart_length), 5000);
+             uart_length = sprintf(uart_tx_buffer, "verification OK - read number of bytes is equal to written number of bytes \r\n");
+             HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, ((uint16_t)uart_length), 5000);
             HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
           }
           else
           {
             /*verification failed - number of written bytes is not equal to number of read bytes*/
-            // uart_length = sprintf(uart_tx_buffer, "verify fail \r\n");
-            // HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
+             uart_length = sprintf(uart_tx_buffer, "verify fail %d %ld \r\n", bytesread, bytesWritten);
+             HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
             HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
             HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
           }
@@ -238,8 +238,8 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_CLASS_ACTIVE:
   Appli_state = APPLICATION_READY;
-  // uart_length = sprintf(uart_tx_buffer, "application ready\r\n");
-  // HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
+   uart_length = sprintf(uart_tx_buffer, "application ready\r\n");
+   HAL_UART_Transmit(&huart3,(uint8_t *)uart_tx_buffer, (uint16_t)uart_length, 1000);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
   if (f_mount(&USBH_fatfs, USBHPath, 0) != FR_OK)
   {

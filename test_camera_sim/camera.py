@@ -5,7 +5,7 @@ import time
 import sys
 
 class Camera:
-    def __init__(self, port='COM6'):
+    def __init__(self, port='COM3'):
         self.COMMAND = b'*RDY*'
 
         self.serial = serial.Serial()

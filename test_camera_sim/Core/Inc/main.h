@@ -37,7 +37,7 @@ extern "C" {
 #include "jpeg_utils.h"
 #include "encode_dma.h"
 
-#include "ov7670.h"
+//#include "ov7670.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -72,6 +72,13 @@ void RGB_GetInfo(JPEG_ConfTypeDef *pInfo);
 #define LD3_Pin GPIO_PIN_14
 #define LD3_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+#define RES_VGA_W     640
+#define RES_VGA_H     480
+#define RES_QVGA_W    ( RES_VGA_W / 2 )   // 320
+#define RES_QVGA_H    ( RES_VGA_H / 2 )   // 240
+#define RES_QQVGA_W   ( RES_QVGA_W / 2 )  // 160
+#define RES_QQVGA_H   ( RES_QVGA_H / 2 )  // 120
+
 #define FRAME_SIZE        (FRAMESIZE_QVGA)
 #define FRAME_SIZE_WIDTH  (RES_QVGA_W)
 #define FRAME_SIZE_HEIGHT (RES_QVGA_H)
