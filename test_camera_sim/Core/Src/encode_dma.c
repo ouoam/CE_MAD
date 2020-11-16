@@ -159,7 +159,7 @@ uint8_t JPEG_EncodeOutputHandler(JPEG_HandleTypeDef *hjpeg)
 {
   if(Jpeg_HWEncodingEnd != 0)
   {
-    while (pHuart->gState != HAL_UART_STATE_READY);
+    //while (pHuart->gState != HAL_UART_STATE_READY);
     return 1;
   }
 
@@ -257,6 +257,8 @@ void HAL_JPEG_DataReadyCallback (JPEG_HandleTypeDef *hjpeg, uint8_t *pDataOut, u
 
     Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
     Jpeg_OUT_BufferTab.DataBufferSize = 0;
+
+    Jpeg_HWEncodingEnd = 1;
   }
 
 //  if(Output_Is_Paused == 1)
@@ -280,10 +282,10 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 //
 //  }
 
-  if(Jpeg_HWEncodingEnd != 0)
-  {
-    HAL_UART_Transmit(huart, (uint8_t*)"*RDY*", 5, 100);
-  }
+//  if(Jpeg_HWEncodingEnd != 0)
+//  {
+//    HAL_UART_Transmit(huart, (uint8_t*)"*RDY*", 5, 100);
+//  }
 }
 
 /**

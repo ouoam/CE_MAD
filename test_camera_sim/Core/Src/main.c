@@ -31,7 +31,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ov7670.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -86,6 +86,8 @@ uint8_t MCU_Data_IntBuffer1[CHUNK_SIZE_IN1];
 
 void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
 {
+  if (line >= FRAME_SIZE_HEIGHT) return;
+
   uint32_t lineMod = line&0x07;
   uint8_t *startT = (uint8_t*)MCU_Data_IntBuffer1 + lineMod*8;
   uint8_t *startF = (uint8_t*)buffCAM + lineMod*FRAME_SIZE_WIDTH*2;
@@ -98,8 +100,8 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
           startT[index]         = startF[0];
           startT[index + 1]     = startF[2];
 
-          startT[index2]        = startF[1];
-          startT[index2 + 8*8]  = startF[3];
+          startT[index2]        = startF[3];
+          startT[index2 + 8*8]  = startF[1];
 
           startF += 4;
       }
@@ -162,16 +164,16 @@ int main(void)
   MX_FATFS_Init();
   MX_USB_HOST_Init();
   /* USER CODE BEGIN 2 */
-	//ov7670_init(&hdcmi, &hi2c2);
+	ov7670_init(&hdcmi, &hi2c2);
 
   HAL_UART_Transmit(&huart3, (uint8_t*)"*RDY*", 5, 100);
 	
 	HAL_Delay(100);
 
-	//HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
+	HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)&buffCAM, MAX_INPUT_LINES * FRAME_SIZE_WIDTH * 2 / 4);
 	
 
-	uint32_t round = 0;
+//	uint32_t round = 0;
 
   /* USER CODE END 2 */
 
@@ -179,20 +181,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    uint32_t *startF = (uint32_t*)buffCAM;
-    for (uint32_t i = 0; i < 0xFF000000; i+=(0xFF000000/FRAME_SIZE_HEIGHT)) {
-      if (i % ((0xFF000000/FRAME_SIZE_HEIGHT) *8) == 0) {
-        startF = (uint32_t*)buffCAM;
-      }
-      for (uint32_t j = 0; j < 0xFF00; j+=(0xFF00/(FRAME_SIZE_WIDTH*2/4))) {
-        *startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
-      }
-      HAL_DCMI_LineEventCallback(&hdcmi);
-      //HAL_Delay(1000/FRAME_SIZE_HEIGHT);
-    }
-    HAL_DCMI_FrameEventCallback(&hdcmi);
-    round+=(4) | (4<<16);
-    round&=0xFF| (0xFF<<16);
+//    uint32_t *startF = (uint32_t*)buffCAM;
+//    for (uint32_t i = 0; i < 0xFF000000; i+=(0xFF000000/FRAME_SIZE_HEIGHT)) {
+//      if (i % ((0xFF000000/FRAME_SIZE_HEIGHT) *8) == 0) {
+//        startF = (uint32_t*)buffCAM;
+//      }
+//      for (uint32_t j = 0; j < 0xFF00; j+=(0xFF00/(FRAME_SIZE_WIDTH*2/4))) {
+//        *startF++ = round | (j & 0xFF00) | (i & 0xFF000000);
+//      }
+//      HAL_DCMI_LineEventCallback(&hdcmi);
+//      //HAL_Delay(1000/FRAME_SIZE_HEIGHT);
+//    }
+//    HAL_DCMI_FrameEventCallback(&hdcmi);
+//    round+=(4) | (4<<16);
+//    round&=0xFF| (0xFF<<16);
 
     //HAL_Delay(5000);
     /* USER CODE END WHILE */
