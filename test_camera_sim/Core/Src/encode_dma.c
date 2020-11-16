@@ -20,6 +20,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "encode_dma.h"
+extern void userFunction(uint8_t* pData, uint32_t pDataLength);
+extern uint8_t capture;
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
   */
@@ -47,7 +49,7 @@ typedef struct
 #endif
 
 #define CHUNK_SIZE_IN   ((uint32_t)(MAX_INPUT_WIDTH * BYTES_PER_PIXEL * MAX_INPUT_LINES))
-#define CHUNK_SIZE_OUT  ((uint32_t) (16 * 1024))
+#define CHUNK_SIZE_OUT  ((uint32_t) (4096))
 
 #define JPEG_BUFFER_EMPTY       0
 #define JPEG_BUFFER_FULL        1
@@ -248,6 +250,12 @@ void HAL_JPEG_DataReadyCallback (JPEG_HandleTypeDef *hjpeg, uint8_t *pDataOut, u
 
   HAL_JPEG_ConfigOutputBuffer(hjpeg, Jpeg_OUT_BufferTab.DataBuffer, CHUNK_SIZE_OUT);
 
+  if(capture == 1){
+    userFunction(Jpeg_OUT_BufferTab.DataBuffer, Jpeg_OUT_BufferTab.DataBufferSize);
+    HAL_Delay(1000);
+    capture = 0;
+  }
+
   if(HAL_UART_Transmit_DMA(pHuart, Jpeg_OUT_BufferTab.DataBuffer, Jpeg_OUT_BufferTab.DataBufferSize)!= HAL_OK)
   {
     NVIC_SystemReset();
@@ -258,17 +266,17 @@ void HAL_JPEG_DataReadyCallback (JPEG_HandleTypeDef *hjpeg, uint8_t *pDataOut, u
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-//  if(Jpeg_OUT_BufferTab.State == JPEG_BUFFER_FULL)
-//  {
-//    Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
-//    Jpeg_OUT_BufferTab.DataBufferSize = 0;
-//
-//    if(Output_Is_Paused == 1)
-//    {
-//      Output_Is_Paused = 0;
-//      HAL_JPEG_Resume(pJpeg, JPEG_PAUSE_RESUME_OUTPUT);
-//    }
-//  }
+  if(Jpeg_OUT_BufferTab.State == JPEG_BUFFER_FULL)
+  {
+    Jpeg_OUT_BufferTab.State = JPEG_BUFFER_EMPTY;
+    Jpeg_OUT_BufferTab.DataBufferSize = 0;
+
+    if(Output_Is_Paused == 1)
+    {
+      Output_Is_Paused = 0;
+      HAL_JPEG_Resume(pJpeg, JPEG_PAUSE_RESUME_OUTPUT);
+    }
+  }
 
   if(Jpeg_HWEncodingEnd != 0)
   {

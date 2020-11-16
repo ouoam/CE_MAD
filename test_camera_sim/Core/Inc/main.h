@@ -63,8 +63,6 @@ void RGB_GetInfo(JPEG_ConfTypeDef *pInfo);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define USER_BTN_Pin GPIO_PIN_13
-#define USER_BTN_GPIO_Port GPIOC
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
 #define CAM_RESET_Pin GPIO_PIN_0
@@ -74,9 +72,9 @@ void RGB_GetInfo(JPEG_ConfTypeDef *pInfo);
 #define LD3_Pin GPIO_PIN_14
 #define LD3_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-#define FRAME_SIZE        (FRAMESIZE_VGA)
-#define FRAME_SIZE_WIDTH  (RES_VGA_W)
-#define FRAME_SIZE_HEIGHT (RES_VGA_H)
+#define FRAME_SIZE        (FRAMESIZE_QVGA)
+#define FRAME_SIZE_WIDTH  (RES_QVGA_W)
+#define FRAME_SIZE_HEIGHT (RES_QVGA_H)
 
 #define JPEG_CHROMA_SAMPLING     JPEG_422_SUBSAMPLING   /* Select Chroma Sampling: JPEG_420_SUBSAMPLING, JPEG_422_SUBSAMPLING, JPEG_444_SUBSAMPLING   */
 #define JPEG_COLOR_SPACE         JPEG_YCBCR_COLORSPACE  /* Select Color Space: JPEG_YCBCR_COLORSPACE, JPEG_GRAYSCALE_COLORSPACE, JPEG_CMYK_COLORSPACE */

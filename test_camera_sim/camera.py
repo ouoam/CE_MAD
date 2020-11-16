@@ -2,12 +2,10 @@ import serial
 import cv2
 import numpy as np
 import time
-import os
 import sys
 
-
 class Camera:
-    def __init__(self, port='COM3'):
+    def __init__(self, port='COM6'):
         self.COMMAND = b'*RDY*'
 
         self.serial = serial.Serial()
@@ -75,7 +73,7 @@ while True:
             lastlist.append(now - last)
             if len(lastlist) > 100:
                 lastlist = lastlist[-100:]
-            print("{:.5f}".format(1 / (sum(lastlist)/len(lastlist))), "fps.", "{:.2f}".format((sum(lastlist)/len(lastlist))*1000), "ms.", len(img), "Bytes")
+            print("{:.5f}".format(1 / (sum(lastlist)/len(lastlist))), "fps", "{:.2f}".format((sum(lastlist)/len(lastlist))*1000), len(img))
             last = now
             cam.display(img)
         except KeyboardInterrupt:

@@ -21,10 +21,12 @@
 #include "main.h"
 #include "dcmi.h"
 #include "dma.h"
+#include "fatfs.h"
 #include "i2c.h"
 #include "i2s.h"
 #include "jpeg.h"
 #include "usart.h"
+#include "usb_host.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -44,17 +46,19 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+extern ApplicationTypeDef Appli_state;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t capture = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_USB_HOST_Process(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -87,21 +91,19 @@ void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
   uint8_t *startF = (uint8_t*)buffCAM + lineMod*FRAME_SIZE_WIDTH*2;
 
   for (uint32_t i = 0; i < FRAME_SIZE_WIDTH / (8*2); i++) {
-    uint32_t index2 = 128;
-    for (uint32_t j = 0; j < 8; j++) {
-      uint32_t index = (((j&0x4)<<3) | (j&0x3))<<1;
+      for (uint32_t j = 0; j < 8*2*2; j+=4) {
+          uint32_t index = j/(8*2)*8*8 + ((j>>1)&0x7);
+          uint32_t index2 = 2*8*8 + (j>>2);
 
-      startT[index]         = startF[0];
-      startT[index + 1]     = startF[2];
+          startT[index]         = startF[0];
+          startT[index + 1]     = startF[2];
 
-      startT[index2]        = startF[1];
-      startT[index2 + 8*8]  = startF[3];
+          startT[index2]        = startF[1];
+          startT[index2 + 8*8]  = startF[3];
 
-      startF += 4;
-      index2++;
-    }
-
-    startT += 4*8*8;
+          startF += 4;
+      }
+      startT += 4*8*8;
   }
 
   if (lineMod == 7) {
@@ -157,6 +159,8 @@ int main(void)
   MX_USART3_UART_Init();
   MX_I2S3_Init();
   MX_JPEG_Init();
+  MX_FATFS_Init();
+  MX_USB_HOST_Init();
   /* USER CODE BEGIN 2 */
 	//ov7670_init(&hdcmi, &hi2c2);
 
@@ -189,10 +193,21 @@ int main(void)
     HAL_DCMI_FrameEventCallback(&hdcmi);
     round+=(4) | (4<<16);
     round&=0xFF| (0xFF<<16);
+
     //HAL_Delay(5000);
     /* USER CODE END WHILE */
+    MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+    // userFunction();
+    if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_SET && capture == 0){
+      capture = 1;
+    }
+
+    if(Appli_state == APPLICATION_READY){
+      if(capture == 1) HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+      else HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+    }
   }
   /* USER CODE END 3 */
 }
@@ -213,7 +228,7 @@ void SystemClock_Config(void)
   /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
@@ -222,16 +237,10 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 216;
+  RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 9;
+  RCC_OscInitStruct.PLL.PLLQ = 7;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Activate the Over-Drive mode
-  */
-  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
@@ -244,20 +253,22 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
     Error_Handler();
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_PLLI2S|RCC_PERIPHCLK_USART3
-                              |RCC_PERIPHCLK_I2C2|RCC_PERIPHCLK_I2S;
-  PeriphClkInitStruct.PLLI2S.PLLI2SN = 144;
+                              |RCC_PERIPHCLK_I2C2|RCC_PERIPHCLK_I2S
+                              |RCC_PERIPHCLK_CLK48;
+  PeriphClkInitStruct.PLLI2S.PLLI2SN = 96;
   PeriphClkInitStruct.PLLI2S.PLLI2SP = RCC_PLLP_DIV2;
-  PeriphClkInitStruct.PLLI2S.PLLI2SR = 3;
+  PeriphClkInitStruct.PLLI2S.PLLI2SR = 2;
   PeriphClkInitStruct.PLLI2S.PLLI2SQ = 2;
   PeriphClkInitStruct.PLLI2SDivQ = 1;
   PeriphClkInitStruct.I2sClockSelection = RCC_I2SCLKSOURCE_PLLI2S;
   PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
   PeriphClkInitStruct.I2c2ClockSelection = RCC_I2C2CLKSOURCE_PCLK1;
+  PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
