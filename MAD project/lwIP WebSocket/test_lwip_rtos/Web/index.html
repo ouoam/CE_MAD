@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>STM32 F767ZI httpd server test page</title>
+  <meta charset="utf-8" />
+<style>
+button {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  font-size: 20px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+	<img id="pic" width="640" height="480">
+	
+	<table>
+	  <tr>
+	    <td></td>
+	    <td><button onclick="snd('w')">^</button></td>
+	    <td></td>
+	  </tr>
+	  <tr>
+	    <td><button onclick="snd('a')">&lt;</button></td>
+	    <td></td>
+	    <td><button onclick="snd('d')">&gt;</button></td>
+	  </tr>
+	  <tr>
+	    <td></td>
+	    <td><button onclick="snd('s')">v</button></td>
+	    <td></td>
+	  </tr>
+	</table>
+<script>
+var _appendBuffer = function(buffer1, buffer2) {
+  var tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
+  tmp.set(new Uint8Array(buffer1), 0);
+  tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
+  return tmp.buffer;
+};
+
+function _arrayBufferToBase64( buffer ) {
+  var binary = '';
+  var bytes = new Uint8Array( buffer );
+  var len = bytes.byteLength;
+  for (var i = 0; i < len; i++) {
+      binary += String.fromCharCode( bytes[ i ] );
+  }
+  return window.btoa( binary );
+}
+
+var out = new Uint8Array()
+var websocket = new WebSocket("ws://192.168.88.99:8080/");
+websocket.binaryType = 'arraybuffer';
+websocket.onmessage = function(evt) {
+  if (typeof evt.data == "string") {
+	if (evt.data == 'E') {
+      //console.image("data:image/jpeg;base64," + _arrayBufferToBase64(out));
+      document.getElementById('pic').src = "data:image/jpeg;base64," + _arrayBufferToBase64(out);
+      out = new Uint8Array();
+	} else {
+	  console.log(evt.data);
+	}
+  } else {
+    out = _appendBuffer(out, evt.data);
+  }
+}
+
+function snd(msg) {
+	websocket.send(msg);
+}
+</script>
+</body>
+</html>
