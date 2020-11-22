@@ -3,8 +3,8 @@
  * Auto generated Run-Time-Environment Configuration File
  *      *** Do not modify ! ***
  *
- * Project: 'Lab01_LED' 
- * Target:  'Lab01_LED' 
+ * Project: 'LAB04_NVIC' 
+ * Target:  'LAB04_NVIC' 
  */
 
 #ifndef RTE_COMPONENTS_H
